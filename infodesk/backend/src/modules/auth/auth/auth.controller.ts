@@ -6,12 +6,10 @@ import { LoginDto } from 'src/modules/users/dto/login.dto';
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService){}
-
-
     @Post('login')
     @HttpCode(200)
     async login(@Body() dto: LoginDto,  @Res({passthrough: true}) res: express.Response){
-        const {token, user} = await this.authService.login(dto.identifier, dto.password)
+        const {token, user} = await this.authService.login(dto.email, dto.password)
         res.cookie('access_token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',

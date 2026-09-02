@@ -21,13 +21,17 @@ enum Role {
 model User {
   id           String   @id @default(uuid())
   role         Role
-  employeeCode String   @unique @map("employee_code") @db.VarChar(4)
+  employeeCode String?  @unique @map("employee_code") @db.VarChar(4)
   name         String
   email        String   @unique
   password     String   @map("password")
-  isActive     Boolean  @map("is_active")
+  isActive     Boolean  @default(true) @map("is_active")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
+
+  createdById  String? @map("created_by_id")
+  createdBy    User?   @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers User[]  @relation("UserCreatedBy")
 
   @@map("users")
 }
