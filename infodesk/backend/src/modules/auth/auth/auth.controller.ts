@@ -23,7 +23,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: express.Response,
   ) {
     const { token, user } = await this.authService.login(
-      dto.email,
+      dto.identifier,
       dto.password,
     );
     res.cookie('access_token', token, {

@@ -11,16 +11,16 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async login(email: string, password: string) {
+  async login(identifier: string, password: string) {
     let user: any;
-    const employeeCode = parseEmployeeLoginIndentifier(email);
+    const employeeCode = parseEmployeeLoginIndentifier(identifier);
     if (employeeCode) {
       user = await this.prismaService.user.findUnique({
         where: { employeeCode },
       });
     } else {
       user = await this.prismaService.user.findUnique({
-        where: { email: email },
+        where: { email: identifier },
       });
     }
 
