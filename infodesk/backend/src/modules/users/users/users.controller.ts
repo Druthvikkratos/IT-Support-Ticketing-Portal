@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { RolesGaurd } from 'src/common/guards/roles.guard';
@@ -14,6 +16,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { CreateAdminDto } from '../dto/create-admin.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CreateEmployeeDto } from '../dto/create-employee.dto';
+import { FindUserQueryDto } from '../dto/find-users-query.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGaurd, RolesGaurd)
@@ -34,8 +37,18 @@ export class UsersController {
 
   @Get()
   @Roles('admin')
-  findAll() {
-    return this.usersSerivce.findAll();
+  findAll(@Query() query: FindUserQueryDto) {
+    return this.usersSerivce.findAll(query);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.usersSerivce.findOne(id);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() user) {
+    return this.usersSerivce.remove(id, user);
   }
 
   @Patch(':id/deactive')
