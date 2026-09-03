@@ -1,0 +1,15 @@
+<div class="topbar d-flex align-items-center justify-content-between px-4">
+  <div></div>
+
+  <div class="dropdown">
+    <button class="btn user-chip dropdown-toggle" data-bs-toggle="dropdown">
+      <div class="avatar">{{ authService.currentUser()?.name?.charAt(0) }}</div>
+      <span class="ms-2">{{ authService.currentUser()?.name }}</span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+      <li><span class="dropdown-item-text small text-muted">{{ authService.currentUser()?.email }}</span></li>
+      <li><hr class="dropdown-divider" /></li>
+      <li><button class="dropdown-item text-danger" (click)="logout()"><i class="ti ti-logout me-2"></i>Logout</button></li>
+    </ul>
+  </div>
+</div>

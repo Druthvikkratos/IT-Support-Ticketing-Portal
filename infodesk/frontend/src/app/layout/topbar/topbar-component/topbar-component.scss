@@ -1,0 +1,15 @@
+.topbar {
+  height: 64px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+.user-chip {
+  display: flex; align-items: center;
+  background: #f1f5f9; border: none;
+}
+.avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #0ea5e9; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; font-weight: 600;
+}

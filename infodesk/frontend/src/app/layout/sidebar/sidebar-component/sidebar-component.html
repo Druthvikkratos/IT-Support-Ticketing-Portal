@@ -1,0 +1,34 @@
+<div class="sidebar d-flex flex-column p-3">
+  <div class="d-flex align-items-center gap-2 mb-4 px-1">
+    <div class="brand-badge-sm">ID</div>
+    <span class="fw-bold text-white">InfoDesk</span>
+  </div>
+
+  <nav class="nav flex-column gap-1">
+    <a routerLink="/dashboard" routerLinkActive="active" class="nav-link-custom">
+      <i class="ti ti-layout-dashboard"></i> Dashboard
+    </a>
+
+    @if (authService.isAdmin()) {
+      <a routerLink="/users" routerLinkActive="active" class="nav-link-custom">
+        <i class="ti ti-users"></i> Users
+      </a>
+      <a routerLink="/tickets" routerLinkActive="active" class="nav-link-custom">
+        <i class="ti ti-ticket"></i> All Tickets
+      </a>
+      <a routerLink="/reports" routerLinkActive="active" class="nav-link-custom">
+        <i class="ti ti-file-spreadsheet"></i> Reports
+      </a>
+      <a routerLink="/history" routerLinkActive="active" class="nav-link-custom">
+        <i class="ti ti-history"></i> History
+      </a>
+    } @else {
+      <a routerLink="/my-tickets" routerLinkActive="active" class="nav-link-custom">
+        <i class="ti ti-ticket"></i> My Tickets
+      </a>
+      <a routerLink="/tickets/new" routerLinkActive="active" class="nav-link-custom">
+        <i class="ti ti-plus"></i> Raise Ticket
+      </a>
+    }
+  </nav>
+</div>

@@ -1,0 +1,20 @@
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: #0f172a;
+  position: fixed;
+  top: 0; left: 0;
+}
+.brand-badge-sm {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: #0ea5e9; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .85rem;
+}
+.nav-link-custom {
+  display: flex; align-items: center; gap: .6rem;
+  color: #94a3b8; padding: .6rem .8rem; border-radius: 8px;
+  font-size: .9rem; text-decoration: none;
+  &:hover { background: #1e293b; color: #fff; }
+  &.active { background: #0ea5e9; color: #fff; }
+}

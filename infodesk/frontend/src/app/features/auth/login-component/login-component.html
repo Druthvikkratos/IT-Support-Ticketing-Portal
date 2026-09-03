@@ -1,0 +1,39 @@
+<div class="login-page d-flex align-items-center justify-content-center vh-100">
+  <div class="card shadow-lg border-0" style="width: 400px;">
+    <div class="card-body p-4">
+      <div class="text-center mb-4">
+        <div class="brand-badge mx-auto mb-3">ID</div>
+        <h4 class="fw-bold mb-1">InfoDesk</h4>
+        <p class="text-muted small mb-0">IT Support & Ticketing Portal</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="mb-3">
+          <label class="form-label small text-muted">Email or Employee ID</label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="identifier"
+            placeholder="admin@company.com or info/0001"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small text-muted">Password</label>
+          <input type="password" class="form-control" formControlName="password" placeholder="••••••••" />
+        </div>
+
+        @if (errorMessage()) {
+          <div class="alert alert-danger py-2 small">{{ errorMessage() }}</div>
+        }
+
+        <button type="submit" class="btn btn-primary w-100 mt-2" [disabled]="form.invalid || loading()">
+          @if (loading()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          Sign In
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
