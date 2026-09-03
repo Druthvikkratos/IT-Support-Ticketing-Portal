@@ -17,7 +17,7 @@ export class AuthService {
 
   readonly currentUser = this.currentUserSignal.asReadonly();
   readonly isInitialized = this.currentUserSignal.asReadonly();
-  readonly isLogged = computed(() => this.currentUserSignal() != null);
+  readonly isLoggedIn = computed(() => this.currentUserSignal() != null);
   readonly isAdmin = computed(() => this.currentUserSignal()?.role === 'admin');
 
   login(identifier: string, password: string): Observable<User> {
