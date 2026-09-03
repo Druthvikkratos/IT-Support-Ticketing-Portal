@@ -15,7 +15,9 @@ export class AuthService {
     let user: any;
     const employeeCode = parseEmployeeLoginIndentifier(email);
     if (employeeCode) {
-      user = await this.prismaService.user.findUnique({ where: { employeeCode } });
+      user = await this.prismaService.user.findUnique({
+        where: { employeeCode },
+      });
     } else {
       user = await this.prismaService.user.findUnique({
         where: { email: email },
@@ -34,5 +36,20 @@ export class AuthService {
     const paylod = { sub: user.id, role: user.role, email: user.email };
     const token = this.jwtService.sign(paylod, { expiresIn: '24h' });
     return { token, user };
+  }
+
+  async getCurrentUser(userId: string) {
+    const user = this.prismaService.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        employeeCode: true,
+      },
+    });
+    if (!user) throw new UnauthorizedException();
+    return user;
   }
 }
