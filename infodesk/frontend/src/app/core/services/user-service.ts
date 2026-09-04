@@ -9,8 +9,8 @@ export interface UsersQuery {
   page: number;
   limit: number;
   search: string;
-  role: string;
-  isActive: boolean;
+  role?: string;
+  isActive?: boolean;
 }
 
 @Injectable({
