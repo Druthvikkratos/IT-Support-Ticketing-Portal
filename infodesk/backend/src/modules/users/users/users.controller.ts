@@ -17,6 +17,8 @@ import { CreateAdminDto } from '../dto/create-admin.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CreateEmployeeDto } from '../dto/create-employee.dto';
 import { FindUserQueryDto } from '../dto/find-users-query.dto';
+import { UpdateAdminDto } from '../dto/update-admin.dto';
+import { UpdateEmployeeDto } from '../dto/update-employee.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGaurd, RolesGaurd)
@@ -48,12 +50,22 @@ export class UsersController {
 
   @Delete(':id')
   remove(@Param('id') id: string, @CurrentUser() user) {
-    return this.usersSerivce.remove(id, user);
+    return this.usersSerivce.remove(id, user.userId);
   }
 
   @Patch(':id/deactive')
   @Roles('admin')
   deactivate(@Param('id') id: string) {
     return this.usersSerivce.deactivate(id);
+  }
+
+  @Patch(':id/admin')
+  updateAdmin(@Param('id') id: string, @Body() dto: UpdateAdminDto) {
+    return this.usersSerivce.updateAdmin(id, dto);
+  }
+
+  @Patch(':id/employee')
+  updateEmployee(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
+    return this.usersSerivce.updateEmployee(id, dto);
   }
 }

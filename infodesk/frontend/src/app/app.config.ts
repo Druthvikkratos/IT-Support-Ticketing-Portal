@@ -1,5 +1,4 @@
 import {
-  APP_INITIALIZER,
   ApplicationConfig,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
@@ -17,6 +16,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([credentialsInterceptor, errorInterceptor])),
-    provideAppInitializer(async () => initializeAuth),
+    provideAppInitializer(() => initializeAuth()),
   ],
 };

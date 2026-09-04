@@ -7,7 +7,7 @@ export class FindUserQueryDto{
 
     @IsOptional()
     @Transform(({value}) => value === 'true' ? true : value === 'false' ? false : undefined)
-    isActive?: Boolean;
+    isActive?: boolean;
 
     @IsOptional() @IsString() search?: string
 

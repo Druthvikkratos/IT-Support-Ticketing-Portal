@@ -4,10 +4,12 @@ import { UserService } from '../../../core/services/user-service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { User } from '../../../core/models/user.model';
+import { DatePipe } from '@angular/common';
+import { UserFormModal } from '../user-form-modal/user-form-modal';
 
 @Component({
   selector: 'app-users-list',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, DatePipe, UserFormModal],
   templateUrl: './users-list.html',
   styleUrl: './users-list.scss',
 })
@@ -83,7 +85,7 @@ export class UsersList {
       .subscribe(() => this.fetch(this.page(), this.limit(), this.search(), this.roleFilter()));
   }
 
-  onModalClose(refresh: boolean) {
+  onModalClosed(refresh: boolean) {
     this.showModal.set(false);
     if (refresh) this.fetch(this.page(), this.limit(), this.search(), this.roleFilter());
   }
