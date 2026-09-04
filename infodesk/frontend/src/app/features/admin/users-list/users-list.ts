@@ -6,6 +6,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { User } from '../../../core/models/user.model';
 import { DatePipe } from '@angular/common';
 import { UserFormModal } from '../user-form-modal/user-form-modal';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-users-list',
@@ -35,24 +36,31 @@ export class UsersList {
 
   showModal = signal(false);
   editingUser = signal<User | null>(null);
+  statusFilter = signal<string>('');
 
   constructor() {
     effect(() => {
-      this.fetch(this.page(), this.limit(), this.search(), this.roleFilter());
+      this.fetch(this.page(), this.limit(), this.search(), this.roleFilter(), this.statusFilter());
     });
   }
 
-  private fetch(page: number, limit: number, search: string, role: string) {
-    this.loading.set(false);
-    this.userService.findAllUsers({ page, limit, search, role: role || undefined }).subscribe({
-      next: (res) => {
-        this.users.set(res.data);
-        this.total.set(res.total);
-        this.totalPages.set(res.totalPages);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+  private fetch(page: number, limit: number, search: string, role: string, status: string) {
+    this.loading.set(true);
+    this.userService
+      .findAllUsers({
+        page, limit, search,
+        role: role || undefined,
+        isActive: status === '' ? undefined : status === 'true',
+      })
+      .subscribe({
+        next: (res) => {
+          this.users.set(res.data);
+          this.total.set(res.total);
+          this.totalPages.set(res.totalPages);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
   sortBy(field: 'name' | 'createdAt') {
@@ -79,14 +87,29 @@ export class UsersList {
   }
 
   deactivate(user: User) {
-    if (!confirm(`Deactivate ${user.name}? They will no longer be able to log in.`)) return;
-    this.userService
-      .deactivate(user.id)
-      .subscribe(() => this.fetch(this.page(), this.limit(), this.search(), this.roleFilter()));
+    Swal.fire({
+      title: `Deactivate ${user.name}?`,
+      text: 'They will no longer be able to log in. This does not delete their data or ticket history.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#0ea5e9',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Yes, deactivate',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.userService.deactivate(user.id).subscribe({
+        next: () => {
+          Swal.fire({ icon: 'success', title: 'Deactivated', timer: 1400, showConfirmButton: false });
+          this.fetch(this.page(), this.limit(), this.search(), this.roleFilter(), this.statusFilter());
+        },
+        error: (err) =>
+          Swal.fire({ icon: 'error', title: 'Error', text: err.error?.message || 'Something went wrong' }),
+      });
+    });
   }
 
   onModalClosed(refresh: boolean) {
     this.showModal.set(false);
-    if (refresh) this.fetch(this.page(), this.limit(), this.search(), this.roleFilter());
+    if (refresh) this.fetch(this.page(), this.limit(), this.search(), this.roleFilter(), this.statusFilter());
   }
 }

@@ -2,7 +2,7 @@
 <div class="modal-panel">
   <div class="modal-content-custom">
     <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
-      <h5 class="fw-bold mb-0">Add User</h5>
+      <h5 class="fw-bold mb-0">{{ isEditMode() ? 'Edit User' : 'Add User' }}</h5>
       <button class="btn-close" (click)="close(false)"></button>
     </div>
 
@@ -15,24 +15,14 @@
           </div>
         </div>
       } @else {
-        <div class="btn-group w-100 mb-4">
-          <button
-            class="btn"
-            [class.btn-primary]="role() === 'employee'"
-            [class.btn-outline-secondary]="role() !== 'employee'"
-            (click)="role.set('employee')"
-          >
-            Employee
-          </button>
-          <button
-            class="btn"
-            [class.btn-primary]="role() === 'admin'"
-            [class.btn-outline-secondary]="role() !== 'admin'"
-            (click)="role.set('admin')"
-          >
-            Admin
-          </button>
-        </div>
+        @if (!isEditMode()) {
+          <div class="btn-group w-100 mb-4">
+            <button class="btn" [class.btn-primary]="role() === 'employee'" [class.btn-outline-secondary]="role() !== 'employee'" (click)="role.set('employee')">Employee</button>
+            <button class="btn" [class.btn-primary]="role() === 'admin'" [class.btn-outline-secondary]="role() !== 'admin'" (click)="role.set('admin')">Admin</button>
+          </div>
+        } @else {
+          <span class="badge text-bg-secondary mb-3 text-uppercase">{{ role() }}</span>
+        }
 
         @if (errorMessage()) {
           <div class="alert alert-danger py-2 small">{{ errorMessage() }}</div>
@@ -47,17 +37,22 @@
             <div class="mb-3">
               <label class="form-label small">Employee Code (4 digits)</label>
               <input class="form-control" formControlName="employeeCode" maxlength="4" placeholder="0001" />
+              @if (isEditMode()) {
+                <div class="form-text">Login ID cannot be changed after creation.</div>
+              }
             </div>
             <div class="mb-3">
               <label class="form-label small">Company Email</label>
               <input class="form-control" formControlName="email" />
             </div>
-            <div class="alert alert-info small">
-              Password auto-generates as <code>Infomap&#64;{{ employeeForm.value.employeeCode || '____' }}</code>
-            </div>
+            @if (!isEditMode()) {
+              <div class="alert alert-info small">
+                Password auto-generates as <code>Infomap&#64;{{ employeeForm.value.employeeCode || '____' }}</code>
+              </div>
+            }
             <button class="btn btn-primary w-100" [disabled]="employeeForm.invalid || submitting()">
               @if (submitting()) { <span class="spinner-border spinner-border-sm me-2"></span> }
-              Create Employee
+              {{ isEditMode() ? 'Save Changes' : 'Create Employee' }}
             </button>
           </form>
         } @else {
@@ -70,13 +65,15 @@
               <label class="form-label small">Company Email</label>
               <input class="form-control" formControlName="email" />
             </div>
-            <div class="mb-3">
-              <label class="form-label small">Password</label>
-              <input type="password" class="form-control" formControlName="password" />
-            </div>
+            @if (!isEditMode()) {
+              <div class="mb-3">
+                <label class="form-label small">Password</label>
+                <input type="password" class="form-control" formControlName="password" />
+              </div>
+            }
             <button class="btn btn-primary w-100" [disabled]="adminForm.invalid || submitting()">
               @if (submitting()) { <span class="spinner-border spinner-border-sm me-2"></span> }
-              Create Admin
+              {{ isEditMode() ? 'Save Changes' : 'Create Admin' }}
             </button>
           </form>
         }

@@ -39,4 +39,12 @@ export class UserService {
   deactivate(id: string): Observable<User> {
     return this.http.delete<User>(`${this.base}/${id}`);
   }
+
+  updateAdmin(id: string, payload: { name: string; email: string }): Observable<User> {
+    return this.http.patch<User>(`${this.base}/${id}/admin`, payload);
+  }
+
+  updateEmployee(id: string, payload: { name: string; email: string }): Observable<User> {
+    return this.http.patch<User>(`${this.base}/${id}/employee`, payload);
+  }
 }
