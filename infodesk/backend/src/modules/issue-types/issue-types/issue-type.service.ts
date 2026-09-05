@@ -7,6 +7,8 @@ import {
 import { PrismaService } from 'src/modules/prisma/prisma/prisma.service';
 import { CreateIssueTypeDto } from '../dto/create-issue-type.dto';
 import { UpdateIssueTypeDto } from '../dto/update-issue-type.dto';
+import { FindIssueTypesQueryDto } from '../dto/find-issue-types-query.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class IssueTypesService {
@@ -36,11 +38,21 @@ export class IssueTypesService {
     });
   }
 
-  async findAllForAdmin() {
-    this.logger.debug(`Find All Issue Type For Admin`);
-    return this.prisma.issueType.findMany({
-      orderBy: { name: 'asc' },
-    });
+  async findAllForAdmin(query: FindIssueTypesQueryDto) {
+    this.logger.log(`Find All Issue Type For Admin`);
+    const {search, isActive, page = 1, limit = 10, sortField = 'name', sortDir = 'asc'} = query;
+    const where: Prisma.IssueTypeWhereInput = {}
+    if(isActive !== undefined) where.isActive = isActive
+    if(search) where.name = {contains: search}
+    const [data, total] = await Promise.all([
+      this.prisma.issueType.findMany({
+        where, 
+        skip: (page - 1 ) * limit,
+        orderBy: {[sortField]: sortDir}
+      }),
+      this.prisma.issueType.count({where})
+    ])
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async updateIssueType(id: number, dto: UpdateIssueTypeDto) {

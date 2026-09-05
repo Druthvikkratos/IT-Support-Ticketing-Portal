@@ -1,0 +1,142 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">Issue Types</h4>
+    <p class="text-muted small mb-0">{{ total() }} total issue types</p>
+  </div>
+  <button class="btn btn-primary d-flex align-items-center gap-2" (click)="openCreate()">
+    <i class="ti ti-plus"></i> Add Issue Type
+  </button>
+</div>
+
+<div class="card border-0 shadow-sm users-card">
+  <div class="card-header bg-white d-flex gap-2 py-3">
+    <div class="input-group" style="max-width: 320px">
+      <span class="input-group-text bg-white"><i class="ti ti-search"></i></span>
+      <input
+        class="form-control"
+        placeholder="Search issue types..."
+        [formControl]="searchControl"
+      />
+    </div>
+    <select
+      class="form-select"
+      style="max-width: 160px"
+      (change)="statusFilter.set($any($event.target).value)"
+    >
+      <option value="true" selected>Active</option>
+      <option value="false">Inactive</option>
+    </select>
+  </div>
+
+  <div class="table-scroll">
+    <table class="table data-table mb-0">
+      <thead>
+        <tr>
+          <th class="text-center col-fit" role="button" (click)="sortBy('name')">
+            <span class="th-content sortable" [class.sort-active]="sortField() === 'name'">
+              Name
+              <i
+                class="ti"
+                [class.ti-arrows-sort]="sortField() !== 'name'"
+                [class.ti-sort-ascending]="sortField() === 'name' && sortDir() === 'asc'"
+                [class.ti-sort-descending]="sortField() === 'name' && sortDir() === 'desc'"
+              ></i>
+            </span>
+          </th>
+          <th class="text-center col-fit" role="button" (click)="sortBy('createdAt')">
+            <span class="th-content sortable" [class.sort-active]="sortField() === 'createdAt'">
+              Created
+              <i
+                class="ti"
+                [class.ti-arrows-sort]="sortField() !== 'createdAt'"
+                [class.ti-sort-ascending]="sortField() === 'createdAt' && sortDir() === 'asc'"
+                [class.ti-sort-descending]="sortField() === 'createdAt' && sortDir() === 'desc'"
+              ></i>
+            </span>
+          </th>
+          <th class="text-center col-fit">
+            <span class="th-content justify-content-center">Status</span>
+          </th>
+          <th class="text-center col-fit actions-col">
+            <span class="th-content justify-content-center">Actions</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="4" class="text-center py-5 text-muted">Loading...</td>
+          </tr>
+        } @else if (issueTypes().length === 0) {
+          <tr>
+            <td colspan="4" class="text-center py-5 text-muted">No issue types found.</td>
+          </tr>
+        } @else {
+          @for (issueType of issueTypes(); track issueType.id) {
+            <tr>
+              <td class="fw-medium col-fit">{{ issueType.name }}</td>
+              <td class="text-muted col-fit">{{ issueType.createdAt | date: 'MMM d, y' }}</td>
+              <td class="text-center">
+                <span
+                  class="status-pill"
+                  [class.status-active]="issueType.isActive"
+                  [class.status-inactive]="!issueType.isActive"
+                >
+                  <span class="status-dot"></span>
+                  {{ issueType.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="col-fit actions-col">
+                <div class="actions-group">
+                  <button class="icon-btn" title="Edit issue type" (click)="openEdit(issueType)">
+                    <i class="ti ti-edit"></i>
+                  </button>
+                  <button
+                    class="icon-btn"
+                    [class.icon-btn-deactivate]="issueType.isActive"
+                    [class.icon-btn-activate]="!issueType.isActive"
+                    [title]="issueType.isActive ? 'Deactivate' : 'Reactivate'"
+                    (click)="toggleActive(issueType)"
+                  >
+                    <i
+                      class="ti"
+                      [class.ti-toggle-right]="issueType.isActive"
+                      [class.ti-toggle-left]="!issueType.isActive"
+                    ></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+    <span class="text-muted small">Page {{ page() }} of {{ totalPages() }}</span>
+    <div class="btn-group">
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="page() === 1"
+        (click)="goToPage(page() - 1)"
+      >
+        Previous
+      </button>
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="page() === totalPages()"
+        (click)="goToPage(page() + 1)"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (showModal()) {
+  <app-issue-type-form-modal
+    [editingIssueType]="editingIssueType()"
+    (closed)="onModalClosed($event)"
+  />
+}

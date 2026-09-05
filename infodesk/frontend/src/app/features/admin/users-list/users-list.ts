@@ -36,7 +36,7 @@ export class UsersList {
 
   showModal = signal(false);
   editingUser = signal<User | null>(null);
-  statusFilter = signal<string>('');
+  statusFilter = signal<'true' | 'false'>('true');
 
   constructor() {
     effect(() => {
@@ -52,7 +52,7 @@ export class UsersList {
         limit,
         search,
         role: role || undefined,
-        isActive: status === '' ? undefined : status === 'true',
+        isActive: status === 'true',
         sortField: sortField ?? undefined, sortDir
       })
       .subscribe({

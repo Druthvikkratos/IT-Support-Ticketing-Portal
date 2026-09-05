@@ -6,6 +6,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { RolesGaurd } from 'src/common/guards/roles.guard';
@@ -14,6 +15,7 @@ import { IssueTypesService } from './issue-type.service';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { CreateIssueTypeDto } from '../dto/create-issue-type.dto';
 import { UpdateIssueTypeDto } from '../dto/update-issue-type.dto';
+import { FindIssueTypesQueryDto } from '../dto/find-issue-types-query.dto';
 
 @Controller('issue-types')
 @UseGuards(JwtAuthGaurd, RolesGaurd)
@@ -27,8 +29,8 @@ export class IssueTypesController {
 
   @Get()
   @Roles('admin')
-  findAllForAdmin() {
-    return this.issueTypesService.findAllForAdmin();
+  findAllForAdmin(@Query() query: FindIssueTypesQueryDto) {
+    return this.issueTypesService.findAllForAdmin(query);
   }
 
   @Post()

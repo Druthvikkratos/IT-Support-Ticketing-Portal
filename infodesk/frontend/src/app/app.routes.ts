@@ -32,6 +32,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/users-list/users-list').then((m) => m.UsersList),
       },
+      {
+        path: 'issue-types',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/issue-types-list/issue-types-list').then(
+            (m) => m.IssueTypesList,
+          ),
+      },
     ],
   },
   {
