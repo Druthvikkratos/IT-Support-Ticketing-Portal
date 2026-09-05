@@ -11,6 +11,8 @@ export interface UsersQuery {
   search: string;
   role?: string;
   isActive?: boolean;
+  sortField?: string;
+  sortDir?: string
 }
 
 @Injectable({
@@ -25,6 +27,8 @@ export class UserService {
     if (query.search) params['search'] = query.search;
     if (query.role) params['role'] = query.role;
     if (query.isActive !== undefined) params['isActive'] = String(query.isActive);
+    if(query.sortField) params['sortField'] = query.sortField
+    if(query.sortDir) params['sortDir'] = query.sortDir
     return this.http.get<PaginatedResponse<User>>(this.base, { params });
   }
 

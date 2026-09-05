@@ -26,8 +26,8 @@ export class UsersList {
   page = signal(1);
   limit = signal(10);
   roleFilter = signal<string>('');
-  sortField = signal<'name' | 'createdAt'>('createdAt');
-  sortDir = signal<'asc' | 'desc'>('desc');
+  sortField = signal<'name' | 'createdAt' | null>(null);
+  sortDir = signal<'asc' | 'desc'>('asc');
 
   users = signal<User[]>([]);
   total = signal(0);
@@ -40,17 +40,20 @@ export class UsersList {
 
   constructor() {
     effect(() => {
-      this.fetch(this.page(), this.limit(), this.search(), this.roleFilter(), this.statusFilter());
+      this.fetch(this.page(), this.limit(), this.search(), this.roleFilter(), this.statusFilter(), this.sortField(), this.sortDir());
     });
   }
 
-  private fetch(page: number, limit: number, search: string, role: string, status: string) {
+  private fetch(page: number, limit: number, search: string, role: string, status: string, sortField: string | null, sortDir: string) {
     this.loading.set(true);
     this.userService
       .findAllUsers({
-        page, limit, search,
+        page,
+        limit,
+        search,
         role: role || undefined,
         isActive: status === '' ? undefined : status === 'true',
+        sortField: sortField ?? undefined, sortDir
       })
       .subscribe({
         next: (res) => {
@@ -61,15 +64,6 @@ export class UsersList {
         },
         error: () => this.loading.set(false),
       });
-  }
-
-  sortBy(field: 'name' | 'createdAt') {
-    if (this.sortField() === field) {
-      this.sortDir.set(this.sortDir() === 'asc' ? 'desc' : 'asc');
-    } else {
-      this.sortField.set(field);
-      this.sortDir.set('asc');
-    }
   }
 
   goToPage(p: number) {
@@ -99,17 +93,50 @@ export class UsersList {
       if (!result.isConfirmed) return;
       this.userService.deactivate(user.id).subscribe({
         next: () => {
-          Swal.fire({ icon: 'success', title: 'Deactivated', timer: 1400, showConfirmButton: false });
-          this.fetch(this.page(), this.limit(), this.search(), this.roleFilter(), this.statusFilter());
+          Swal.fire({
+            icon: 'success',
+            title: 'Deactivated',
+            timer: 1400,
+            showConfirmButton: false,
+          });
+          this.fetch(
+            this.page(),
+            this.limit(),
+            this.search(),
+            this.roleFilter(),
+            this.statusFilter(),
+            this.sortField(),
+            this.sortDir()
+          );
         },
         error: (err) =>
-          Swal.fire({ icon: 'error', title: 'Error', text: err.error?.message || 'Something went wrong' }),
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.error?.message || 'Something went wrong',
+          }),
       });
     });
   }
 
   onModalClosed(refresh: boolean) {
     this.showModal.set(false);
-    if (refresh) this.fetch(this.page(), this.limit(), this.search(), this.roleFilter(), this.statusFilter());
+    if (refresh)
+      this.fetch(this.page(), this.limit(), this.search(), this.roleFilter(), this.statusFilter(), this.sortField(), this.sortDir());
+  }
+
+  sortBy(field: 'name' | 'createdAt') {
+    if (this.sortField() === field) {
+      this.sortDir.set(this.sortDir() === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortField.set(field);
+      this.sortDir.set('asc');
+    }
+    this.page.set(1)
+  }
+
+  sortIcon(field: 'name' | 'createdAt'): string {
+    if (this.sortField() !== field) return 'ti-arrows-sort';
+    return this.sortDir() === 'asc' ? 'ti-sort-ascending' : 'ti-sort-descending';
   }
 }

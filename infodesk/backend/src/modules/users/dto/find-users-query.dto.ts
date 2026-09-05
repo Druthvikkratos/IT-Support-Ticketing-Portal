@@ -13,4 +13,7 @@ export class FindUserQueryDto{
 
     @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number = 1;
     @IsOptional() @Type(() => Number) @IsInt() @Min(1) limit?: number = 10;
+
+    @IsOptional() @IsIn(['name', 'createdAt']) sortField?: 'name' | 'createdAt'
+    @IsOptional() @IsIn(['asc', 'desc']) sortDir?: 'asc' | 'desc'
 }

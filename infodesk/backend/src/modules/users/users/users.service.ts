@@ -86,10 +86,10 @@ export class UsersService {
 
   async findAll(query: FindUserQueryDto) {
     this.logger.debug(`findAll query: ${JSON.stringify(query)}`);
-    const { role, isActive, search, page = 1, limit = 10 } = query;
+    const { role, isActive, search, page = 1, limit = 10, sortField = 'createdAt', sortDir = 'desc' } = query;
     const where: Prisma.UserWhereInput = {};
     if (role) where.role;
-    where.isActive = isActive ?? true;
+    if (isActive !== undefined) where.isActive = isActive;
     if (search) {
       where.OR = [
         { name: { contains: search } },
@@ -102,7 +102,7 @@ export class UsersService {
         where,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { [sortField]: sortDir },
         select: {
           id: true,
           name: true,

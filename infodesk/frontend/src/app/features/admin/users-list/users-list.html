@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- <div class="d-flex justify-content-between align-items-center mb-4">
   <div>
     <h4 class="fw-bold mb-0">User Management</h4>
     <p class="text-muted small mb-0">{{ total() }} total users</p>
@@ -59,20 +59,20 @@
       <tbody>
         @if (loading()) {
           <tr>
-            <td colspan="7" class="text-center py-4 text-muted">Loading...</td>
+            <td colspan="8" class="text-center py-4 text-muted">Loading...</td>
           </tr>
         } @else if (users().length === 0) {
           <tr>
-            <td colspan="7" class="text-center py-4 text-muted">No users found.</td>
+            <td colspan="8" class="text-center py-4 text-muted">No users found.</td>
           </tr>
         } @else {
           @for (user of users(); track user.id) {
             <tr>
               <td class="fw-medium">{{ user.name }}</td>
-              <td>{{ user.email }}</td>
+              <td class="text-muted">{{ user.email }}</td>
               <td>
                 <span
-                  class="badge"
+                  class="badge rounded-pill fw-normal text-center"
                   [class.text-bg-primary]="user.role === 'admin'"
                   [class.text-bg-secondary]="user.role === 'employee'"
                 >
@@ -83,26 +83,188 @@
               <td>{{ user.createdBy?.name || '—' }}</td>
               <td>{{ user.createdAt | date: 'MMM d, y' }}</td>
               <span
-                class="badge"
+                class="badge rounded-pill fw-normal"
                 [class.text-bg-success]="user.isActive"
                 [class.text-bg-secondary]="!user.isActive"
               >
+              <i class="ti" [class.ti-circle-check]="user.isActive" [class.ti-circle-x]="!user.isActive"></i>
                 {{ user.isActive ? 'Active' : 'Inactive' }}
               </span>
-              <td class="text-end">
-                <button class="btn btn-sm btn-icon" title="Edit" (click)="openEdit(user)">
-                  <i class="ti ti-edit"></i>
-                </button>
-                <button
-                  class="btn btn-sm btn-icon text-warning"
-                  title="Deactivate"
-                  (click)="deactivate(user)"
+              <td>
+                <div class="d-flex justify-content-center gap-3">
+                  <i class="ti ti-edit action-icon text-primary" title="Edit" (click)="openEdit(user)"></i>
+                  <i class="ti ti-user-off action-icon text-warning" title="Deactivate" (click)="deactivate(user)"></i>
+                  <i class="ti ti-trash action-icon text-danger" title="Delete"></i>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+    <span class="text-muted small">Page {{ page() }} of {{ totalPages() }}</span>
+    <div class="btn-group">
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="page() === 1"
+        (click)="goToPage(page() - 1)"
+      >
+        Previous
+      </button>
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="page() === totalPages()"
+        (click)="goToPage(page() + 1)"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (showModal()) {
+  <app-user-form-modal [editingUser]="editingUser()" (closed)="onModalClosed($event)" />
+} -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">User Management</h4>
+    <p class="text-muted small mb-0">{{ total() }} total users</p>
+  </div>
+  <button class="btn btn-primary d-flex align-items-center gap-2" (click)="openCreate()">
+    <i class="ti ti-plus"></i> Add User
+  </button>
+</div>
+
+<div class="card border-0 shadow-sm users-card">
+  <div class="card-header bg-white d-flex gap-2 py-3">
+    <div class="input-group" style="max-width: 320px">
+      <span class="input-group-text bg-white"><i class="ti ti-search"></i></span>
+      <input
+        class="form-control"
+        placeholder="Search name, email, code..."
+        [formControl]="searchControl"
+      />
+    </div>
+    <select
+      class="form-select"
+      style="max-width: 160px"
+      (change)="roleFilter.set($any($event.target).value)"
+    >
+      <option value="">All Roles</option>
+      <option value="admin">Admin</option>
+      <option value="employee">Employee</option>
+    </select>
+    <select
+      class="form-select"
+      style="max-width: 160px"
+      (change)="statusFilter.set($any($event.target).value)"
+    >
+      <option value="">All Statuses</option>
+      <option value="true">Active</option>
+      <option value="false">Inactive</option>
+    </select>
+  </div>
+
+  <div class="table-scroll">
+    <table class="table users-table mb-0">
+      <thead>
+        <tr>
+          <th role="button" (click)="sortBy('name')">
+            <span class="th-content sortable" [class.sort-active]="sortField() === 'name'"
+              >Name
+              <i
+                class="ti"
+                [class.ti-arrows-sort]="sortField() !== 'name'"
+                [class.ti-sort-ascending]="sortField() === 'name' && sortDir() === 'asc'"
+                [class.ti-sort-descending]="sortField() === 'name' && sortDir() === 'desc'"
+              ></i
+            ></span>
+          </th>
+          <th><span class="th-content">Email</span></th>
+          <th class="text-center"><span class="th-content justify-content-center">Role</span></th>
+          <th class="text-center">
+            <span class="th-content justify-content-center">Employee Code</span>
+          </th>
+          <th><span class="th-content">Created By</span></th>
+          <th role="button" (click)="sortBy('createdAt')">
+            <span class="th-content sortable" [class.sort-active]="sortField() === 'createdAt'"
+              >Created
+              <i
+                class="ti"
+                [class.ti-arrows-sort]="sortField() !== 'createdAt'"
+                [class.ti-sort-ascending]="sortField() === 'createdAt' && sortDir() === 'asc'"
+                [class.ti-sort-descending]="sortField() === 'createdAt' && sortDir() === 'desc'"
+              ></i
+            ></span>
+          </th>
+          <th class="text-center"><span class="th-content justify-content-center">Status</span></th>
+          <th class="text-center actions-col">
+            <span class="th-content justify-content-center">Actions</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="8" class="text-center py-5 text-muted">Loading...</td>
+          </tr>
+        } @else if (users().length === 0) {
+          <tr>
+            <td colspan="8" class="text-center py-5 text-muted">No users found.</td>
+          </tr>
+        } @else {
+          @for (user of users(); track user.id) {
+            <tr>
+              <td class="fw-medium">{{ user.name }}</td>
+              <td class="text-muted">{{ user.email }}</td>
+              <td class="text-center">
+                <span
+                  class="role-pill"
+                  [class.role-admin]="user.role === 'admin'"
+                  [class.role-employee]="user.role === 'employee'"
                 >
-                  <i class="ti ti-user-off"></i>
-                </button>
-                <button class="btn btn-sm btn-icon text-danger" title="Delete">
-                  <i class="ti ti-trash"></i>
-                </button>
+                  {{ user.role }}
+                </span>
+              </td>
+              <td class="text-center">
+                @if (user.employeeCode) {
+                  <span class="code-chip">{{ user.employeeCode }}</span>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+              <td class="text-muted">{{ user.createdBy?.name || '—' }}</td>
+              <td class="text-muted">{{ user.createdAt | date: 'MMM d, y' }}</td>
+              <td class="text-center">
+                <span
+                  class="status-pill"
+                  [class.status-active]="user.isActive"
+                  [class.status-inactive]="!user.isActive"
+                >
+                  <span class="status-dot"></span>
+                  {{ user.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="actions-col">
+                <div class="actions-group">
+                  <button class="icon-btn" title="Edit user" (click)="openEdit(user)">
+                    <i class="ti ti-edit"></i>
+                  </button>
+                  <button
+                    class="icon-btn icon-btn-warning"
+                    title="Deactivate user"
+                    (click)="deactivate(user)"
+                  >
+                    <i class="ti ti-user-off"></i>
+                  </button>
+                  <button class="icon-btn icon-btn-danger" title="Delete user">
+                    <i class="ti ti-trash"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           }
