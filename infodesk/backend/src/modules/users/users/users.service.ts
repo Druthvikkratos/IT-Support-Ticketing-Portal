@@ -86,7 +86,15 @@ export class UsersService {
 
   async findAll(query: FindUserQueryDto) {
     this.logger.debug(`findAll query: ${JSON.stringify(query)}`);
-    const { role, isActive, search, page = 1, limit = 10, sortField = 'createdAt', sortDir = 'desc' } = query;
+    const {
+      role,
+      isActive,
+      search,
+      page = 1,
+      limit = 10,
+      sortField = 'createdAt',
+      sortDir = 'desc',
+    } = query;
     const where: Prisma.UserWhereInput = {};
     if (role) where.role;
     if (isActive !== undefined) where.isActive = isActive;
@@ -179,15 +187,22 @@ export class UsersService {
   }
 
   async updateEmployee(id: string, dto: UpdateEmployeeDto) {
+    this.logger.log(`Updating Employee: ${dto.email}, email ${dto.email}`);
     const user = await this.prismaService.user.findUnique({ where: { id } });
-    if (!user || user.role !== Role.employee)
+    if (!user || user.role !== Role.employee) {
+      this.logger.warn(`Employee not found ${id} (${dto.name})`);
       throw new NotFoundException('Employee not found');
-    
+    }
     const emailTaken = await this.prismaService.user.findFirst({
       where: { email: dto.email, NOT: { id } },
     });
-    if (emailTaken) throw new BadRequestException('Email already in use');
-
+    if (emailTaken) {
+      this.logger.warn(
+        `Employee Email Already In Use ${id} email: (${dto.email})`,
+      );
+      throw new BadRequestException('Email already in use');
+    }
+    this.logger.log(`Employee updated: ${dto.email} (${dto.name})`);
     return this.prismaService.user.update({ where: { id }, data: dto });
   }
 }
