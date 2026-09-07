@@ -68,4 +68,10 @@ export class UsersController {
   updateEmployee(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
     return this.usersSerivce.updateEmployee(id, dto);
   }
+
+  @Patch(':id/reactivate')
+  reactivate(@Param('id') id: string){
+    return this.usersSerivce.reactivate(id);
+  }
+
 }

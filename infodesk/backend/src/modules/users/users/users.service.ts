@@ -205,4 +205,23 @@ export class UsersService {
     this.logger.log(`Employee updated: ${dto.email} (${dto.name})`);
     return this.prismaService.user.update({ where: { id }, data: dto });
   }
+
+  async reactivate(id: string) {
+    this.logger.log('Start: Userservice : reactivate : id =', id);
+    const user = await this.prismaService.user.findUnique({ where: { id } });
+    if (!user) {
+      this.logger.warn(`User not found ${id}`);
+      throw new NotFoundException('User not found');
+    }
+    if (user.isActive) {
+      this.logger.warn(`User is already active ${id}`);
+      throw new BadRequestException('User is already active');
+    }
+    this.logger.log(`User updated reactivate method`);
+    this.logger.log('End: Userservice: reactivate');
+    return this.prismaService.user.update({
+      where: { id },
+      data: { isActive: true, deletedAt: null, deletedById: null },
+    });
+  }
 }

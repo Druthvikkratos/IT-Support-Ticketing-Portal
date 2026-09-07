@@ -133,7 +133,7 @@
                     [class.icon-btn-deactivate]="user.isActive"
                     [class.icon-btn-activate]="!user.isActive"
                     [title]="user.isActive ? 'Deactivate user' : 'Reactivate user'"
-                    (click)="deactivate(user)"
+                    (click)="toggleStatus(user)"
                   >
                     <i
                       class="ti"

@@ -40,11 +40,27 @@ export class UsersList {
 
   constructor() {
     effect(() => {
-      this.fetch(this.page(), this.limit(), this.search(), this.roleFilter(), this.statusFilter(), this.sortField(), this.sortDir());
+      this.fetch(
+        this.page(),
+        this.limit(),
+        this.search(),
+        this.roleFilter(),
+        this.statusFilter(),
+        this.sortField(),
+        this.sortDir(),
+      );
     });
   }
 
-  private fetch(page: number, limit: number, search: string, role: string, status: string, sortField: string | null, sortDir: string) {
+  private fetch(
+    page: number,
+    limit: number,
+    search: string,
+    role: string,
+    status: string,
+    sortField: string | null,
+    sortDir: string,
+  ) {
     this.loading.set(true);
     this.userService
       .findAllUsers({
@@ -53,7 +69,8 @@ export class UsersList {
         search,
         role: role || undefined,
         isActive: status === 'true',
-        sortField: sortField ?? undefined, sortDir
+        sortField: sortField ?? undefined,
+        sortDir,
       })
       .subscribe({
         next: (res) => {
@@ -106,7 +123,7 @@ export class UsersList {
             this.roleFilter(),
             this.statusFilter(),
             this.sortField(),
-            this.sortDir()
+            this.sortDir(),
           );
         },
         error: (err) =>
@@ -122,7 +139,15 @@ export class UsersList {
   onModalClosed(refresh: boolean) {
     this.showModal.set(false);
     if (refresh)
-      this.fetch(this.page(), this.limit(), this.search(), this.roleFilter(), this.statusFilter(), this.sortField(), this.sortDir());
+      this.fetch(
+        this.page(),
+        this.limit(),
+        this.search(),
+        this.roleFilter(),
+        this.statusFilter(),
+        this.sortField(),
+        this.sortDir(),
+      );
   }
 
   sortBy(field: 'name' | 'createdAt') {
@@ -132,11 +157,54 @@ export class UsersList {
       this.sortField.set(field);
       this.sortDir.set('asc');
     }
-    this.page.set(1)
+    this.page.set(1);
   }
 
   sortIcon(field: 'name' | 'createdAt'): string {
     if (this.sortField() !== field) return 'ti-arrows-sort';
     return this.sortDir() === 'asc' ? 'ti-sort-ascending' : 'ti-sort-descending';
+  }
+
+  toggleStatus(user: User) {
+    const activating = !user.isActive;
+
+    Swal.fire({
+      title: `${activating ? 'Reactivate' : 'Deactivate'} ${user.name}?`,
+      text: activating
+        ? 'They will be able to log in again with their existing credentials.'
+        : 'They will no longer be able to log in. Their ticket history stays intact.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#0ea5e9',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: `Yes, ${activating ? 'reactivate' : 'deactivate'}`,
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      const request$ = activating
+        ? this.userService.reactivate(user.id)
+        : this.userService.deactivate(user.id);
+
+      request$.subscribe({
+        next: () => {
+          Swal.fire({ icon: 'success', title: 'Updated', timer: 1200, showConfirmButton: false });
+          this.fetch(
+            this.page(),
+            this.limit(),
+            this.search(),
+            this.roleFilter(),
+            this.statusFilter(),
+            this.sortField(),
+            this.sortDir(),
+          );
+        },
+        error: (err) =>
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.error?.message || 'Something went wrong',
+          }),
+      });
+    });
   }
 }

@@ -12,7 +12,7 @@ export interface UsersQuery {
   role?: string;
   isActive?: boolean;
   sortField?: string;
-  sortDir?: string
+  sortDir?: string;
 }
 
 @Injectable({
@@ -27,8 +27,8 @@ export class UserService {
     if (query.search) params['search'] = query.search;
     if (query.role) params['role'] = query.role;
     if (query.isActive !== undefined) params['isActive'] = String(query.isActive);
-    if(query.sortField) params['sortField'] = query.sortField
-    if(query.sortDir) params['sortDir'] = query.sortDir
+    if (query.sortField) params['sortField'] = query.sortField;
+    if (query.sortDir) params['sortDir'] = query.sortDir;
     return this.http.get<PaginatedResponse<User>>(this.base, { params });
   }
 
@@ -50,5 +50,9 @@ export class UserService {
 
   updateEmployee(id: string, payload: { name: string; email: string }): Observable<User> {
     return this.http.patch<User>(`${this.base}/${id}/employee`, payload);
+  }
+
+  reactivate(id: string): Observable<User> {
+    return this.http.patch<User>(`${this.base}/${id}/reactivate`, {});
   }
 }

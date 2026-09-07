@@ -39,15 +39,31 @@ export class IssueTypesList {
 
   constructor() {
     effect(() => {
-      this.fetch(this.page(), this.limit(), this.search(), this.statusFilter(), this.sortField(), this.sortDir());
+      this.fetch(
+        this.page(),
+        this.limit(),
+        this.search(),
+        this.statusFilter(),
+        this.sortField(),
+        this.sortDir(),
+      );
     });
   }
 
-  private fetch(page: number, limit: number, search: string, status: string, sortField: string | null, sortDir: string | null) {
+  private fetch(
+    page: number,
+    limit: number,
+    search: string,
+    status: string,
+    sortField: string | null,
+    sortDir: string | null,
+  ) {
     this.loading.set(true);
     this.issueTypesService
       .findAllForAdmin({
-        page, limit, search,
+        page,
+        limit,
+        search,
         isActive: status === 'true',
         sortField: sortField ?? undefined,
         sortDir: sortDir ?? undefined,
@@ -63,21 +79,18 @@ export class IssueTypesList {
       });
   }
 
- sortBy(field: string) {
-  if (this.sortField() !== field) {
-    // clicking a different column — start fresh at ascending
-    this.sortField.set(field);
-    this.sortDir.set('asc');
-  } else if (this.sortDir() === 'asc') {
-    // 2nd click on the same column — descending
-    this.sortDir.set('desc');
-  } else {
-    // 3rd click — reset to no sort (backend falls back to its own default)
-    this.sortField.set(null);
-    this.sortDir.set(null);
+  sortBy(field: string) {
+    if (this.sortField() !== field) {
+      this.sortField.set(field);
+      this.sortDir.set('asc');
+    } else if (this.sortDir() === 'asc') {
+      this.sortDir.set('desc');
+    } else {
+      this.sortField.set(null);
+      this.sortDir.set(null);
+    }
+    this.page.set(1);
   }
-  this.page.set(1);
-}
 
   goToPage(p: number) {
     if (p >= 1 && p <= this.totalPages()) this.page.set(p);
@@ -97,9 +110,10 @@ export class IssueTypesList {
     const action = issueType.isActive ? 'deactivate' : 'reactivate';
     Swal.fire({
       title: `${action === 'deactivate' ? 'Deactivate' : 'Reactivate'} "${issueType.name}"?`,
-      text: action === 'deactivate'
-        ? 'Employees will no longer see this option when raising a ticket.'
-        : 'This will reappear in the ticket form dropdown.',
+      text:
+        action === 'deactivate'
+          ? 'Employees will no longer see this option when raising a ticket.'
+          : 'This will reappear in the ticket form dropdown.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#0ea5e9',
@@ -110,16 +124,35 @@ export class IssueTypesList {
       this.issueTypesService.toggleActive(issueType.id).subscribe({
         next: () => {
           Swal.fire({ icon: 'success', title: 'Updated', timer: 1200, showConfirmButton: false });
-          this.fetch(this.page(), this.limit(), this.search(), this.statusFilter(), this.sortField(), this.sortDir());
+          this.fetch(
+            this.page(),
+            this.limit(),
+            this.search(),
+            this.statusFilter(),
+            this.sortField(),
+            this.sortDir(),
+          );
         },
-        error: (err) => Swal.fire({ icon: 'error', title: 'Error', text: err.error?.message || 'Something went wrong' }),
+        error: (err) =>
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.error?.message || 'Something went wrong',
+          }),
       });
     });
   }
 
   onModalClosed(refresh: boolean) {
     this.showModal.set(false);
-    if (refresh) this.fetch(this.page(), this.limit(), this.search(), this.statusFilter(), this.sortField(), this.sortDir());
+    if (refresh)
+      this.fetch(
+        this.page(),
+        this.limit(),
+        this.search(),
+        this.statusFilter(),
+        this.sortField(),
+        this.sortDir(),
+      );
   }
-
 }
