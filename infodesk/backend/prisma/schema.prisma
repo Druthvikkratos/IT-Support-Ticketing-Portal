@@ -18,6 +18,17 @@ enum Role {
   employee
 }
 
+enum FieldType {
+  text
+  textarea
+  number
+  date
+  dropdown
+  radio
+  checkbox
+  phone
+}
+
 model User {
   id           String   @id @default(uuid())
   role         Role
@@ -49,4 +60,18 @@ model IssueType {
   updatedAt DateTime @updatedAt
 
   @@map("issue_type")
+}
+
+model FormField {
+  id           Int       @id @default(autoincrement())
+  label        String
+  fieldType    FieldType @map("field_type")
+  options      Json?
+  isRequired   Boolean   @default(false) @map("is_requried")
+  displayOrder Int       @default(0) @map("display_order")
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("form_fields")
 }
