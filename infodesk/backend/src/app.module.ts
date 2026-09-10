@@ -5,9 +5,10 @@ import { PrismaModule } from './modules/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth/auth.module';
 import { UsersModule } from './modules/users/users/users.module';
 import { IssueTypesModule } from './modules/issue-types/issue-types/issue-types.module';
+import { FormFieldsModule } from './modules/form-fields/form-fields/form-fields.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsersModule, IssueTypesModule],
+  imports: [PrismaModule, AuthModule, UsersModule, IssueTypesModule, FormFieldsModule],
   controllers: [AppController],
   providers: [AppService],
 })

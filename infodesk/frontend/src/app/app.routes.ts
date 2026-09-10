@@ -40,6 +40,12 @@ export const routes: Routes = [
             (m) => m.IssueTypesList,
           ),
       },
+      {
+        path: 'form-builder',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/form-builder/form-builder').then((m) => m.FormBuilder),
+      },
     ],
   },
   {

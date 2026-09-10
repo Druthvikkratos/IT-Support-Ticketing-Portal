@@ -27,6 +27,8 @@ enum FieldType {
   radio
   checkbox
   phone
+  email
+  file
 }
 
 model User {
@@ -67,6 +69,7 @@ model FormField {
   label        String
   fieldType    FieldType @map("field_type")
   options      Json?
+  fileConfig   Json?     @map("file_config")
   isRequired   Boolean   @default(false) @map("is_requried")
   displayOrder Int       @default(0) @map("display_order")
   isActive     Boolean   @default(true) @map("is_active")

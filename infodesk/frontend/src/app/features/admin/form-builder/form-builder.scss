@@ -1,0 +1,70 @@
+.field-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  padding: .85rem 1rem;
+  border-radius: 8px;
+  background: #fff;
+  transition: background-color .15s ease;
+
+  &:hover { background: #f8fafc; }
+  &.field-row-inactive { opacity: .55; }
+}
+
+// this is what makes it visually obvious to the admin that a row is draggable
+.drag-handle {
+  cursor: grab;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  &:active { cursor: grabbing; }
+}
+
+.field-icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.field-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+.field-label {
+  font-weight: 500;
+  font-size: .9rem;
+  color: #0f172a;
+}
+.required-dot {
+  color: #dc2626;
+  margin-left: .2rem;
+}
+.field-meta {
+  font-size: .78rem;
+  color: #94a3b8;
+}
+
+// Angular CDK's placeholder shown while dragging — keep it visually calm
+.cdk-drag-preview {
+  box-shadow: 0 8px 20px rgba(15, 23, 42, .15);
+  border-radius: 8px;
+}
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+.cdk-drop-list-dragging .field-row:not(.cdk-drag-placeholder) {
+  transition: transform 200ms ease;
+}
+
+.preview-card {
+  position: sticky;
+  top: 1rem;
+}

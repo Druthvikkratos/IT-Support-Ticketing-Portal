@@ -1,0 +1,66 @@
+<div class="modal-backdrop-custom" (click)="close()"></div>
+<div class="modal-panel">
+  <div class="modal-content-custom">
+    <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+      <h5 class="fw-bold mb-0">{{ isEditMode() ? 'Edit Field' : 'Add Field' }}</h5>
+      <button class="btn-close" (click)="close()"></button>
+    </div>
+
+    <div class="p-4">
+      @if (errorMessage()) {
+        <div class="alert alert-danger py-2 small">{{ errorMessage() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="mb-3">
+          <label class="form-label small">Field Label</label>
+          <input class="form-control" formControlName="label" placeholder="e.g. Asset Tag Number" maxlength="100" />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small">Field Type</label>
+          <select class="form-select" formControlName="fieldType">
+            @for (type of fieldTypes; track type.value) {
+              <option [value]="type.value">{{ type.label }}</option>
+            }
+          </select>
+        </div>
+
+        @if (needsOptions()) {
+          <div class="mb-3">
+            <label class="form-label small">Options</label>
+            <div class="d-flex gap-2 mb-2">
+              <input
+                class="form-control"
+                [ngModel]="optionInput()"
+                (ngModelChange)="optionInput.set($event)"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Type an option and press Add"
+                (keydown.enter)="$event.preventDefault(); addOption()"
+              />
+              <button type="button" class="btn btn-outline-secondary" (click)="addOption()">Add</button>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              @for (option of options(); track option) {
+                <span class="option-chip">
+                  {{ option }}
+                  <i class="ti ti-x ms-1" role="button" (click)="removeOption(option)"></i>
+                </span>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="form-check mb-4">
+          <input class="form-check-input" type="checkbox" formControlName="isRequired" id="isRequired" />
+          <label class="form-check-label small" for="isRequired">Make this field required</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" [disabled]="form.invalid || submitting()">
+          @if (submitting()) { <span class="spinner-border spinner-border-sm me-2"></span> }
+          {{ isEditMode() ? 'Save Changes' : 'Add Field' }}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

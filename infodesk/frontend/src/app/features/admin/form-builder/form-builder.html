@@ -1,0 +1,88 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">Ticket Form Builder</h4>
+    <p class="text-muted small mb-0">Drag fields to reorder them. Changes apply to the ticket form immediately.</p>
+  </div>
+  <button class="btn btn-primary d-flex align-items-center gap-2" (click)="openCreate()">
+    <i class="ti ti-plus"></i> Add Field
+  </button>
+</div>
+
+<div class="row g-4">
+  <!-- LEFT: manage fields -->
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <span class="fw-semibold small text-muted">CUSTOM FIELDS</span>
+      </div>
+
+      <div class="card-body p-2">
+        @if (loading()) {
+          <div class="text-center py-5 text-muted">Loading...</div>
+        } @else if (fields().length === 0) {
+          <div class="text-center py-5 text-muted">No custom fields yet. Add one to get started.</div>
+        } @else {
+          <div cdkDropList (cdkDropListDropped)="onDrop($event)" class="field-list">
+            @for (field of fields(); track field.id) {
+              <div class="field-row" cdkDrag [class.field-row-inactive]="!field.isActive">
+                <div class="drag-handle" cdkDragHandle title="Drag to reorder">
+                  <i class="ti ti-grip-vertical"></i>
+                </div>
+
+                <div class="field-icon">
+                  <i class="ti" [class]="fieldTypeIcon(field.fieldType)"></i>
+                </div>
+
+                <div class="field-info">
+                  <div class="field-label">
+                    {{ field.label }}
+                    @if (field.isRequired) { <span class="required-dot" title="Required">*</span> }
+                  </div>
+                  <div class="field-meta">{{ fieldTypeLabel(field.fieldType) }}</div>
+                </div>
+
+                <span class="status-pill" [class.status-active]="field.isActive" [class.status-inactive]="!field.isActive">
+                  <span class="status-dot"></span>
+                  {{ field.isActive ? 'Active' : 'Inactive' }}
+                </span>
+
+                <div class="actions-group">
+                  <button class="icon-btn icon-btn-edit" title="Edit field" (click)="openEdit(field)">
+                    <i class="ti ti-edit"></i>
+                  </button>
+                  <button
+                    class="icon-btn"
+                    [class.icon-btn-deactivate]="field.isActive"
+                    [class.icon-btn-activate]="!field.isActive"
+                    [title]="field.isActive ? 'Deactivate' : 'Reactivate'"
+                    (click)="toggleActive(field)"
+                  >
+                    <i class="ti" [class.ti-toggle-right]="field.isActive" [class.ti-toggle-left]="!field.isActive"></i>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: live preview of the actual employee ticket form -->
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm preview-card">
+      <div class="card-header bg-white py-3">
+        <span class="fw-semibold small text-muted">
+          <i class="ti ti-eye me-1"></i> LIVE PREVIEW — WHAT EMPLOYEES WILL SEE
+        </span>
+      </div>
+      <div class="card-body">
+        <app-field-preview [fields]="previewFields()" />
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (showModal()) {
+  <app-form-field-form-modal [editingField]="editingField()" (closed)="onModalClosed($event)" />
+}
