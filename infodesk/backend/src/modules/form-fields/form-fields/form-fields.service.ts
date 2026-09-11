@@ -28,6 +28,13 @@ export class FormFieldsService {
           label: formFieldDto.label,
           fieldType: formFieldDto.fieldType,
           options: formFieldDto.options ?? undefined,
+          fileConfig: formFieldDto.fileConfig
+            ? {
+                allowedCategories: formFieldDto.fileConfig.allowedCategories,
+                allowMultiple: formFieldDto.fileConfig.allowMultiple,
+                maxSizeMB: formFieldDto.fileConfig.maxSizeMB,
+              }
+            : undefined,
           isRequired: formFieldDto.isRequired,
           displayOrder: formFieldDto.displayOrder ?? nextOrder,
         },
@@ -107,9 +114,26 @@ export class FormFieldsService {
         );
         throw new NotFoundException('form fields not found');
       }
+      const updateData = {
+        label: updateDtoFormField.label,
+        fieldType: updateDtoFormField.fieldType,
+        options: updateDtoFormField.options,
+
+        fileConfig: updateDtoFormField.fileConfig
+          ? {
+              allowedCategories:
+                updateDtoFormField.fileConfig.allowedCategories,
+              allowMultiple: updateDtoFormField.fileConfig.allowMultiple,
+              maxSizeMB: updateDtoFormField.fileConfig.maxSizeMB,
+            }
+          : undefined,
+
+        isRequired: updateDtoFormField.isRequired,
+        displayOrder: updateDtoFormField.displayOrder,
+      };
       const updateField = await this.prismaService.formField.update({
         where: { id },
-        data:  updateDtoFormField
+        data: updateData,
       });
       this.logger.log(`Update form field completed |  id=${id}`);
       return updateField;
@@ -165,7 +189,6 @@ export class FormFieldsService {
     this.logger.log(
       `Reorder form fields started | count=${reorderFormFieldsDto.orderedIds.length}`,
     );
-
     try {
       this.prismaService.$transaction(
         reorderFormFieldsDto.orderedIds.map((id, index) =>
@@ -191,5 +214,20 @@ export class FormFieldsService {
 
       throw new InternalServerErrorException('Failed to reorder form fields');
     }
+  }
+
+
+  async remove(id: number){
+     this.logger.log(
+      `Delete Form Field for id: ${id}`,
+    );
+    const field = await this.prismaService.formField.findUnique({where: {id}})
+    if(!field){
+      this.logger.warn(
+          `Field not found id=${id}`,
+        );
+      throw new NotFoundException('Field not found')
+    }
+    return this.prismaService.formField.delete({where: {id}})
   }
 }

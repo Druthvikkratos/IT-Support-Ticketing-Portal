@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -53,5 +54,11 @@ export class FormFieldsController {
   @Roles('admin')
   toggleActiveFormField(@Param('id', ParseIntPipe) id: number) {
     return this.formFieldsService.toggleActiveFormField(id);
+  }
+
+  @Delete(':id')
+  @Roles('admin')
+  remove(@Param('id', ParseIntPipe) id: number){
+    return this.formFieldsService.remove(id)
   }
 }

@@ -5,15 +5,24 @@
 </div>
 <div class="mb-3">
   <label class="form-label small fw-medium">Description *</label>
-  <textarea class="form-control" disabled rows="2" placeholder="Describe the issue in detail"></textarea>
+  <textarea
+    class="form-control"
+    disabled
+    rows="2"
+    placeholder="Describe the issue in detail"
+  ></textarea>
 </div>
 <div class="mb-3">
   <label class="form-label small fw-medium">Issue Type *</label>
-  <select class="form-select" disabled><option>Select issue type...</option></select>
+  <select class="form-select" disabled>
+    <option>Select issue type...</option>
+  </select>
 </div>
 <div class="mb-3">
   <label class="form-label small fw-medium">Priority *</label>
-  <select class="form-select" disabled><option>Low / High</option></select>
+  <select class="form-select" disabled>
+    <option>Low / High</option>
+  </select>
 </div>
 
 @if (fields.length > 0) {
@@ -23,19 +32,39 @@
   @for (field of fields; track field.id) {
     <div class="mb-3">
       <label class="form-label small fw-medium">
-        {{ field.label }} @if (field.isRequired) { <span class="text-danger">*</span> }
+        {{ field.label }}
+        @if (field.isRequired) {
+          <span class="text-danger">*</span>
+        }
       </label>
 
       @switch (field.fieldType) {
-        @case ('text') { <input class="form-control" disabled placeholder="Text answer" /> }
-        @case ('textarea') { <textarea class="form-control" disabled rows="2" placeholder="Long text answer"></textarea> }
-        @case ('number') { <input type="number" class="form-control" disabled placeholder="0" /> }
-        @case ('date') { <input type="date" class="form-control" disabled /> }
-        @case ('phone') { <input type="tel" class="form-control" disabled placeholder="Phone number" /> }
+        @case ('text') {
+          <input class="form-control" disabled placeholder="Text answer" />
+        }
+        @case ('textarea') {
+          <textarea
+            class="form-control"
+            disabled
+            rows="2"
+            placeholder="Long text answer"
+          ></textarea>
+        }
+        @case ('number') {
+          <input type="number" class="form-control" disabled placeholder="0" />
+        }
+        @case ('date') {
+          <input type="date" class="form-control" disabled />
+        }
+        @case ('phone') {
+          <input type="tel" class="form-control" disabled placeholder="Phone number" />
+        }
         @case ('dropdown') {
           <select class="form-select" disabled>
             <option>Select an option...</option>
-            @for (opt of field.options; track opt) { <option>{{ opt }}</option> }
+            @for (opt of field.options; track opt) {
+              <option>{{ opt }}</option>
+            }
           </select>
         }
         @case ('radio') {
@@ -53,6 +82,26 @@
               <label class="form-check-label small">{{ opt }}</label>
             </div>
           }
+        }
+        @case ('email') {
+          <input type="email" class="form-control" disabled placeholder="name@company.com" />
+        }
+        @case ('file') {
+          <div class="file-preview-box">
+            <i class="ti ti-cloud-upload"></i>
+            <div class="small text-muted mt-1">
+              {{
+                field.fileConfig?.allowMultiple
+                  ? 'Drop files here or click to upload'
+                  : 'Drop a file here or click to upload'
+              }}
+            </div>
+            <div class="small text-muted">
+              Accepted: {{ formatCategories(field.fileConfig?.allowedCategories) }} · Max
+              {{ field.fileConfig?.maxSizeMB }}MB
+              {{ field.fileConfig?.allowMultiple ? 'per file' : '' }}
+            </div>
+          </div>
         }
       }
     </div>

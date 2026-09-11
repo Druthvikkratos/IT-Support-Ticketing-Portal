@@ -34,4 +34,8 @@ export class FormFieldsService {
   reorderFormFields(orderedIds: number[]): Observable<FormField[]> {
     return this.http.patch<FormField[]>(`${this.base}/reorder`, { orderedIds });
   }
+
+  deleteFormField(id: number): Observable<void>{
+    return this.http.delete<void>(`${this.base}/${id}`)
+  }
 }

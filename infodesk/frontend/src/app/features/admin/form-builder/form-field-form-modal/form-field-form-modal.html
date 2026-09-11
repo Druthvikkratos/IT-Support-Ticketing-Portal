@@ -51,6 +51,46 @@
           </div>
         }
 
+        @if (needsFileConfig()) {
+  <div class="mb-3">
+    <label class="form-label small">Allowed File Types</label>
+    <div class="d-flex flex-column gap-2">
+      @for (cat of fileCategoryOptions; track cat.value) {
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            [id]="'cat-' + cat.value"
+            [checked]="selectedCategories().includes(cat.value)"
+            (change)="toggleCategory(cat.value)"
+          />
+          <label class="form-check-label small" [for]="'cat-' + cat.value">{{ cat.label }}</label>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6">
+      <label class="form-label small">Max File Size (MB)</label>
+      <input
+        type="number" class="form-control" min="1" max="50"
+        [ngModel]="maxSizeMB()" (ngModelChange)="maxSizeMB.set($event)"
+        [ngModelOptions]="{ standalone: true }"
+      />
+    </div>
+    <div class="col-6 d-flex align-items-end">
+      <div class="form-check">
+        <input
+          class="form-check-input" type="checkbox" id="allowMultiple"
+          [checked]="allowMultiple()" (change)="allowMultiple.set(!allowMultiple())"
+        />
+        <label class="form-check-label small" for="allowMultiple">Allow multiple files</label>
+      </div>
+    </div>
+  </div>
+}
+
         <div class="form-check mb-4">
           <input class="form-check-input" type="checkbox" formControlName="isRequired" id="isRequired" />
           <label class="form-check-label small" for="isRequired">Make this field required</label>

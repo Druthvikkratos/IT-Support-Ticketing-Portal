@@ -14,61 +14,65 @@ import { FormField } from '../../../core/models/form-field.model';
   styleUrl: './form-builder.scss',
 })
 export class FormBuilder {
-  private formFieldsService = inject(FormFieldsService)
+  private formFieldsService = inject(FormFieldsService);
 
-  fields = signal<FormField[]>([])
-  loading = signal(false)
+  fields = signal<FormField[]>([]);
+  loading = signal(false);
 
-  showModal = signal(false)
+  showModal = signal(false);
   editingField = signal<FormField | null>(null);
 
-  previewFields = computed(() => 
+  previewFields = computed(() =>
     this.fields()
-        .filter((f) => f.isActive)
-        .sort((a, b) => a.displayOrder - b.displayOrder)
-  )
+      .filter((f) => f.isActive)
+      .sort((a, b) => a.displayOrder - b.displayOrder),
+  );
 
-  constructor(){
-    this.fetch()
+  constructor() {
+    this.fetch();
   }
 
-  fetch(){
-    this.loading.set(true)
+  fetch() {
+    this.loading.set(true);
     this.formFieldsService.findAllFormFieldsForAdmin().subscribe({
       next: (field) => {
-        this.fields.set(field)
-        this.loading.set(false)
+        this.fields.set(field);
+        this.loading.set(false);
       },
-      error: () => this.loading.set(false)
-    })
+      error: () => this.loading.set(false),
+    });
   }
 
-  onDrop(event: CdkDragDrop<FormField[]>){
-    const redordered = [...this.fields()]
-    moveItemInArray(redordered, event.previousIndex, event.currentIndex)
-    this.fields.set(redordered)
+  onDrop(event: CdkDragDrop<FormField[]>) {
+    const redordered = [...this.fields()];
+    moveItemInArray(redordered, event.previousIndex, event.currentIndex);
+    this.fields.set(redordered);
 
-    const orderedIds = redordered.map((f) => f.id)
+    const orderedIds = redordered.map((f) => f.id);
     this.formFieldsService.reorderFormFields(orderedIds).subscribe({
       error: () => {
-        Swal.fire({ icon: 'error', title: 'Could not save new order', text: 'Reverting to the last saved order.' })
-        this.fetch()
-      }
-    })
+        Swal.fire({
+          icon: 'error',
+          title: 'Could not save new order',
+          text: 'Reverting to the last saved order.',
+        });
+        this.fetch();
+      },
+    });
   }
 
-  openCreate(){
-    this.editingField.set(null)
-    this.showModal.set(true)
+  openCreate() {
+    this.editingField.set(null);
+    this.showModal.set(true);
   }
 
-  openEdit(field: FormField){
-    this.editingField.set(field)
-    this.showModal.set(true)
+  openEdit(field: FormField) {
+    this.editingField.set(field);
+    this.showModal.set(true);
   }
 
-  toggleActive(field: FormField){
-    const activating = !field.isActive
+  toggleActive(field: FormField) {
+    const activating = !field.isActive;
 
     Swal.fire({
       title: `${activating ? 'Reactivate' : 'Deactivate'} "${field.label}"?`,
@@ -88,29 +92,72 @@ export class FormBuilder {
           Swal.fire({ icon: 'success', title: 'Updated', timer: 1200, showConfirmButton: false });
           this.fetch();
         },
-        error: (err: any) => Swal.fire({ icon: 'error', title: 'Error', text: err.error?.message || 'Something went wrong' }),
+        error: (err: any) =>
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.error?.message || 'Something went wrong',
+          }),
       });
     });
   }
 
-  onModalClosed(refresh: boolean){
-    this.showModal.set(false)
-    if(refresh) this.fetch()
+  onModalClosed(refresh: boolean) {
+    this.showModal.set(false);
+    if (refresh) this.fetch();
   }
 
-  fieldTypeIcon(type: string): string{
+  fieldTypeIcon(type: string): string {
     const icons: Record<string, string> = {
-      text: 'ti-forms', textarea: 'ti-align-left', number: 'ti-hash', date: 'ti-calendar',
-      dropdown: 'ti-list', radio: 'ti-circle-dot', checkbox: 'ti-checkbox', phone: 'ti-phone',
+      text: 'ti-forms',
+      textarea: 'ti-align-left',
+      number: 'ti-hash',
+      date: 'ti-calendar',
+      dropdown: 'ti-list',
+      radio: 'ti-circle-dot',
+      checkbox: 'ti-checkbox',
+      phone: 'ti-phone',
     };
-    return icons[type] ?? 'ti-forms'
+    return icons[type] ?? 'ti-forms';
   }
 
-  fieldTypeLabel(type: string): string{
+  fieldTypeLabel(type: string): string {
     const labels: Record<string, string> = {
-      text: 'Short Text', textarea: 'Long Text', number: 'Number', date: 'Date',
-      dropdown: 'Dropdown', radio: 'Radio', checkbox: 'Checkbox', phone: 'Phone',
+      text: 'Short Text',
+      textarea: 'Long Text',
+      number: 'Number',
+      date: 'Date',
+      dropdown: 'Dropdown',
+      radio: 'Radio',
+      checkbox: 'Checkbox',
+      phone: 'Phone',
     };
     return labels[type] ?? type;
+  }
+
+  deleteField(field: FormField) {
+    Swal.fire({
+      title: `Delete "${field.label}"?`,
+      text: 'This permanently removes the field. This cannot be undone — consider deactivating instead if you might need it again.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Yes, delete permanently',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.formFieldsService.deleteFormField(field.id).subscribe({
+        next: () => {
+          Swal.fire({ icon: 'success', title: 'Deleted', timer: 1200, showConfirmButton: false });
+          this.fetch();
+        },
+        error: (err) =>
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.error?.message || 'Something went wrong',
+          }),
+      });
+    });
   }
 }

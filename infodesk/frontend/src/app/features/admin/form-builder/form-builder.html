@@ -1,7 +1,9 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
   <div>
     <h4 class="fw-bold mb-0">Ticket Form Builder</h4>
-    <p class="text-muted small mb-0">Drag fields to reorder them. Changes apply to the ticket form immediately.</p>
+    <p class="text-muted small mb-0">
+      Drag fields to reorder them. Changes apply to the ticket form immediately.
+    </p>
   </div>
   <button class="btn btn-primary d-flex align-items-center gap-2" (click)="openCreate()">
     <i class="ti ti-plus"></i> Add Field
@@ -20,7 +22,9 @@
         @if (loading()) {
           <div class="text-center py-5 text-muted">Loading...</div>
         } @else if (fields().length === 0) {
-          <div class="text-center py-5 text-muted">No custom fields yet. Add one to get started.</div>
+          <div class="text-center py-5 text-muted">
+            No custom fields yet. Add one to get started.
+          </div>
         } @else {
           <div cdkDropList (cdkDropListDropped)="onDrop($event)" class="field-list">
             @for (field of fields(); track field.id) {
@@ -36,18 +40,28 @@
                 <div class="field-info">
                   <div class="field-label">
                     {{ field.label }}
-                    @if (field.isRequired) { <span class="required-dot" title="Required">*</span> }
+                    @if (field.isRequired) {
+                      <span class="required-dot" title="Required">*</span>
+                    }
                   </div>
                   <div class="field-meta">{{ fieldTypeLabel(field.fieldType) }}</div>
                 </div>
 
-                <span class="status-pill" [class.status-active]="field.isActive" [class.status-inactive]="!field.isActive">
+                <span
+                  class="status-pill"
+                  [class.status-active]="field.isActive"
+                  [class.status-inactive]="!field.isActive"
+                >
                   <span class="status-dot"></span>
                   {{ field.isActive ? 'Active' : 'Inactive' }}
                 </span>
 
                 <div class="actions-group">
-                  <button class="icon-btn icon-btn-edit" title="Edit field" (click)="openEdit(field)">
+                  <button
+                    class="icon-btn icon-btn-edit"
+                    title="Edit field"
+                    (click)="openEdit(field)"
+                  >
                     <i class="ti ti-edit"></i>
                   </button>
                   <button
@@ -57,7 +71,18 @@
                     [title]="field.isActive ? 'Deactivate' : 'Reactivate'"
                     (click)="toggleActive(field)"
                   >
-                    <i class="ti" [class.ti-toggle-right]="field.isActive" [class.ti-toggle-left]="!field.isActive"></i>
+                    <i
+                      class="ti"
+                      [class.ti-toggle-right]="field.isActive"
+                      [class.ti-toggle-left]="!field.isActive"
+                    ></i>
+                  </button>
+                  <button
+                    class="icon-btn icon-btn-danger"
+                    title="Delete permanently"
+                    (click)="deleteField(field)"
+                  >
+                    <i class="ti ti-trash"></i>
                   </button>
                 </div>
               </div>

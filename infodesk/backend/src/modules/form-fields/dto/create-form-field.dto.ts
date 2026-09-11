@@ -8,7 +8,10 @@ import {
   IsOptional,
   MaxLength,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
+import { FileConfigDto } from './file-config.dto';
+import { Type } from 'class-transformer';
 
 export class CreateFormFieldDto {
   @IsNotEmpty()
@@ -25,6 +28,12 @@ export class CreateFormFieldDto {
     message: 'Options are required for dropdown, radio, and checkbox fields',
   })
   options?: string[];
+
+  @ValidateIf((dto) => dto.fieldType === 'file')
+  @IsNotEmpty({message: 'File configuration is required for file upload fields'})
+  @ValidateNested()
+  @Type(() => FileConfigDto)
+  fileConfig?: FileConfigDto;
 
   @IsBoolean()
   isRequired: boolean;
