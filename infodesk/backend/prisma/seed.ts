@@ -43,6 +43,13 @@ async function main() {
   }
 
   console.log('Issue types seeded.');
+
+  await prisma.ticketCounter.upsert({
+    where: {id: 1},
+    update: {},
+    create: {id: 1, lastNumber: 0}
+  })
+  console.log('Ticket counter initialized.');
 }
 
 main()

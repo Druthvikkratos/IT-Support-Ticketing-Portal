@@ -18,6 +18,20 @@ enum Role {
   employee
 }
 
+enum Priority {
+  low
+  medium
+  high
+}
+
+enum TicketStatus {
+  raised
+  pending
+  in_progress
+  solved
+  closed
+}
+
 enum FieldType {
   text
   textarea
@@ -51,6 +65,8 @@ model User {
   deletedBy    User?     @relation("UserDeletedBy", fields: [deletedById], references: [id])
   deletedUsers User[]    @relation("UserDeletedBy")
 
+  ticketsRaised Ticket[] @relation("RaisedBy")
+
   @@map("users")
 }
 
@@ -60,6 +76,7 @@ model IssueType {
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt
+  tickets   Ticket[]
 
   @@map("issue_type")
 }
@@ -77,4 +94,34 @@ model FormField {
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
   @@map("form_fields")
+}
+
+model Ticket {
+  id                String       @id @default(uuid())
+  ticketNumber      String       @unique @map("ticket_number")
+  title             String
+  description       String       @db.Text
+  issueTypeId       Int
+  issueType         IssueType    @relation(fields: [issueTypeId], references: [id])
+  priority          Priority
+  status            TicketStatus @default(raised)
+  phoneNumber       String       @map("phone_number")
+  customFieldValues Json?        @map("custom_field_values")
+
+  raisedById String
+  rasiedBy   User   @relation("RaisedBy", fields: [raisedById], references: [id])
+
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  closedAt  DateTime? @map("closed_at")
+
+  @@map("tickets")
+}
+
+model TicketCounter {
+  id         Int @id @default(1)
+  lastNumber Int @default(0)
+
+  @@map("ticket_counter")
 }
