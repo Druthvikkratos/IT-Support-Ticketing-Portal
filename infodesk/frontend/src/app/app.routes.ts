@@ -46,6 +46,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/form-builder/form-builder').then((m) => m.FormBuilder),
       },
+      {
+        path: 'tickets/new',
+        loadComponent: () =>
+          import('./features/employee/raise-ticket/raise-ticket').then(
+            (m) => m.RaiseTicket,
+          ),
+      },
     ],
   },
   {

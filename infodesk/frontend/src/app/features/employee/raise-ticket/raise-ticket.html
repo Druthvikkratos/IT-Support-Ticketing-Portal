@@ -1,0 +1,188 @@
+<div class="mb-4">
+  <h4 class="fw-bold mb-0">Raise a Ticket</h4>
+  <p class="text-muted small mb-0">Describe your issue and our IT team will get back to you.</p>
+</div>
+
+@if (isLoading()) {
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5 text-muted">Loading form...</div>
+  </div>
+} @else {
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+      @if (errorMessage()) {
+        <div class="alert alert-danger py-2 small">{{ errorMessage() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="mb-3">
+          <label class="form-label small fw-medium">Title <span class="text-danger">*</span></label>
+          <input
+            class="form-control"
+            formControlName="title"
+            placeholder="Brief summary of the issue"
+            maxlength="150"
+            [class.is-invalid]="isInvalid(form, 'title')"
+          />
+          @if (isInvalid(form, 'title')) {
+            <div class="invalid-feedback">Title is required.</div>
+          }
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-medium"
+            >Description <span class="text-danger">*</span></label
+          >
+          <textarea
+            class="form-control"
+            rows="4"
+            formControlName="description"
+            placeholder="Describe the issue in detail — what happened, when it started, what you've already tried"
+            [class.is-invalid]="isInvalid(form, 'description')"
+          ></textarea>
+          @if (isInvalid(form, 'description')) {
+            <div class="invalid-feedback">Description is required.</div>
+          }
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-medium"
+              >Issue Type <span class="text-danger">*</span></label
+            >
+            <select
+              class="form-select"
+              formControlName="issueTypeId"
+              [class.is-invalid]="isInvalid(form, 'issueTypeId')"
+            >
+              <option [ngValue]="null" disabled>Select issue type...</option>
+              @for (type of issueTypes(); track type.id) {
+                <option [ngValue]="type.id">{{ type.name }}</option>
+              }
+            </select>
+            @if (isInvalid(form, 'issueTypeId')) {
+              <div class="invalid-feedback">Please select an issue type.</div>
+            }
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label small fw-medium"
+              >Priority <span class="text-danger">*</span></label
+            >
+            <select class="form-select" formControlName="priority">
+              <option value="low">Low</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-medium"
+            >Contact Phone Number <span class="text-danger">*</span></label
+          >
+          <input
+            class="form-control"
+            formControlName="phoneNumber"
+            placeholder="So IT can reach you directly"
+            [class.is-invalid]="isInvalid(form, 'phoneNumber')"
+          />
+          @if (isInvalid(form, 'phoneNumber')) {
+            <div class="invalid-feedback">Phone number is required.</div>
+          }
+        </div>
+
+        <!-- DYNAMIC FIELDS — rendered from whatever the admin configured -->
+        @if (customFields().length > 0) {
+          <hr class="my-4" />
+          <div class="text-uppercase small text-muted fw-semibold mb-3">Additional Information</div>
+
+          <div [formGroup]="customForm">
+            @for (field of customFields(); track field.id) {
+              <div class="mb-3">
+                <label class="form-label small fw-medium">
+                  {{ field.label }}
+                  @if (field.isRequired) {
+                    <span class="text-danger">*</span>
+                  }
+                </label>
+
+                @switch (field.fieldType) {
+                  @case ('text') {
+                    <input class="form-control" [formControlName]="field.id" />
+                  }
+                  @case ('textarea') {
+                    <textarea class="form-control" rows="3" [formControlName]="field.id"></textarea>
+                  }
+                  @case ('number') {
+                    <input type="number" class="form-control" [formControlName]="field.id" />
+                  }
+                  @case ('date') {
+                    <input type="date" class="form-control" [formControlName]="field.id" />
+                  }
+                  @case ('phone') {
+                    <input type="tel" class="form-control" [formControlName]="field.id" />
+                  }
+                  @case ('email') {
+                    <input type="email" class="form-control" [formControlName]="field.id" />
+                  }
+                  @case ('dropdown') {
+                    <select class="form-select" [formControlName]="field.id">
+                      <option value="" disabled>Select an option...</option>
+                      @for (opt of field.options; track opt) {
+                        <option [value]="opt">{{ opt }}</option>
+                      }
+                    </select>
+                  }
+                  @case ('radio') {
+                    @for (opt of field.options; track opt) {
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="radio"
+                          [formControlName]="field.id.toString()"
+                          [value]="opt"
+                          [id]="'f' + field.id + '-' + opt"
+                        />
+                        <label class="form-check-label small" [for]="'f' + field.id + '-' + opt">{{
+                          opt
+                        }}</label>
+                      </div>
+                    }
+                  }
+                  @case ('checkbox') {
+                    @for (opt of field.options; track opt) {
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          [id]="'f' + field.id + '-' + opt"
+                          [checked]="isCheckBoxSelected(field.id, opt)"
+                          (change)="toggleCheckBoxOption(field.id, opt)"
+                        />
+                        <label class="form-check-label small" [for]="'f' + field.id + '-' + opt">{{
+                          opt
+                        }}</label>
+                      </div>
+                    }
+                  }
+                  @case ('file') {
+                    <div class="file-placeholder">
+                      <i class="ti ti-cloud-upload"></i>
+                      <div class="small mt-1">File upload coming soon</div>
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+        }
+        <button type="submit" class="btn btn-primary float-end mt-3" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          Submit Ticket
+        </button>
+      </form>
+    </div>
+  </div>
+}
