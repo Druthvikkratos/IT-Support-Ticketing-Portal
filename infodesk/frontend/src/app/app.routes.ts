@@ -47,11 +47,14 @@ export const routes: Routes = [
           import('./features/admin/form-builder/form-builder').then((m) => m.FormBuilder),
       },
       {
+        path: 'my-tickets',
+        loadComponent: () =>
+          import('./features/employee/my-tickets/my-tickets').then((m) => m.MyTickets),
+      },
+      {
         path: 'tickets/new',
         loadComponent: () =>
-          import('./features/employee/raise-ticket/raise-ticket').then(
-            (m) => m.RaiseTicket,
-          ),
+          import('./features/employee/raise-ticket/raise-ticket').then((m) => m.RaiseTicket),
       },
     ],
   },

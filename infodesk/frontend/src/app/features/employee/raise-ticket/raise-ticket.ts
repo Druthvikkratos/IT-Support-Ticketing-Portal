@@ -8,7 +8,7 @@ import { IssueType } from '../../../core/models/issue-type.model';
 import { FormField } from '../../../core/models/form-field.model';
 import { forkJoin } from 'rxjs';
 import Swal from 'sweetalert2';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 
 @Component({
   selector: 'app-raise-ticket',
@@ -22,6 +22,7 @@ export class RaiseTicket {
   private issueTypeService = inject(IssueTypesService);
   private formFieldService = inject(FormFieldsService);
   private router = inject(Router);
+  private location = inject(Location)
 
   isLoading = signal(false);
   isSubmitting = signal(false);
@@ -125,5 +126,9 @@ export class RaiseTicket {
   isInvalid(formGroup: FormGroup, controlName: string): boolean {
     const control = formGroup.get(controlName);
     return !!control && control.invalid && control.touched;
+  }
+
+  goBack(): void {
+    this.location.back(); // Navigates backward in the browser history
   }
 }
