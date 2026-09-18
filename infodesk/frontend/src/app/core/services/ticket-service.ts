@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response.model';
 import { CreateTicketPayload, Ticket } from '../models/ticket.model';
 
@@ -41,8 +41,18 @@ export class TicketService {
   }
 
   findAll(query: TicketsQuery): Observable<PaginatedResponse<Ticket>> {
-    return this.http.get<PaginatedResponse<Ticket>>(this.base, { params: this.buildParams(query) });
+    return this.http.get<PaginatedResponse<Ticket>>(this.base, { params: this.buildParams(query) })
+    .pipe(
+      map((res) => ({
+        ...res,
+        data: res.data.map((ticket: any) => ({
+          ...ticket,
+          raisedBy: ticket.rasiedBy,
+        })),
+      }))
+    );
   }
+
   findOne(id: string): Observable<Ticket> {
     return this.http.get<Ticket>(`${this.base}/${id}`);
   }

@@ -56,6 +56,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/employee/raise-ticket/raise-ticket').then((m) => m.RaiseTicket),
       },
+      {
+        path: 'tickets',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/all-tickets/all-tickets').then((m) => m.AllTickets),
+      },
     ],
   },
   {

@@ -1,21 +1,23 @@
 import { Component, effect, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { TicketService } from '../../../core/services/ticket-service';
-import { STATUS_CONFIG, Ticket, TicketStatus } from '../../../core/models/ticket.model';
+import { IssueTypesService } from '../../../core/services/issue-types';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { STATUS_CONFIG, Ticket, TicketStatus } from '../../../core/models/ticket.model';
+import { IssueType } from '../../../core/models/issue-type.model';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 @Component({
-  selector: 'app-my-tickets',
+  selector: 'app-all-tickets',
   imports: [ReactiveFormsModule, RouterLink, CommonModule],
-  templateUrl: './my-tickets.html',
-  styleUrl: './my-tickets.scss',
+  templateUrl: './all-tickets.html',
+  styleUrl: './all-tickets.scss',
 })
-export class MyTickets {
-  
-  private ticketService = inject(TicketService);
+export class AllTickets {
+  private ticketsService = inject(TicketService);
+  private issueTypesService = inject(IssueTypesService);
 
   statusConfig = STATUS_CONFIG;
   statusTabs: { value: string; label: string }[] = [
@@ -40,11 +42,16 @@ export class MyTickets {
   sortDir = signal<'asc' | 'desc' | null>('desc');
 
   tickets = signal<Ticket[]>([]);
+  issueTypes = signal<IssueType[]>([]);
+  issueTypeFilter = signal<string>('');
+
   total = signal(0);
   totalPages = signal(0);
   loading = signal(false);
 
   constructor() {
+    this.issueTypesService.findAllActive().subscribe((types) => this.issueTypes.set(types));
+
     effect(() => {
       this.fetch(
         this.page(),
@@ -52,6 +59,7 @@ export class MyTickets {
         this.search(),
         this.statusFilter(),
         this.priorityFilter(),
+        this.issueTypeFilter(),
         this.sortField(),
         this.sortDir(),
       );
@@ -64,30 +72,31 @@ export class MyTickets {
     search: string,
     status: string,
     priority: string,
+    issueTypeId: string,
     sortField: string | null,
     sortDir: string | null,
   ) {
     this.loading.set(true);
-    this.ticketService
-      .findMine({
+    this.ticketsService
+      .findAll({
         page,
         limit,
         search,
         status: status || undefined,
         priority: priority || undefined,
-        sortField: sortField || undefined,
-        sortDir: sortDir || undefined,
+        issueTypeId: issueTypeId ? Number(issueTypeId) : undefined,
+        sortField: sortField ?? undefined,
+        sortDir: sortDir ?? undefined,
       })
       .subscribe({
         next: (res) => {
           this.tickets.set(res.data);
+          console.log("logs", this.tickets()[0].raisedBy.name)
           this.total.set(res.total);
           this.totalPages.set(res.totalPages);
           this.loading.set(false);
         },
-        error: () => {
-          this.loading.set(false);
-        },
+        error: () => this.loading.set(false),
       });
   }
 
