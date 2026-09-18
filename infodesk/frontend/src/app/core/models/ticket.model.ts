@@ -17,6 +17,7 @@ export interface Ticket {
   createdAt: string;
   updatedAt: string;
   closedAt: string | null;
+  statusHistory?: TicketStatusHistoryEntry[];
 }
 
 export interface CreateTicketPayload {
@@ -37,3 +38,11 @@ export const STATUS_CONFIG: Record<TicketStatus, { label: string; class: string 
   solved: { label: 'Solved', class: 'status-solved' },
   closed: { label: 'Closed', class: 'status-closed' },
 };
+
+export interface TicketStatusHistoryEntry {
+  id: string;
+  oldStatus: TicketStatus | null;
+  newStatus: TicketStatus;
+  changedAt: string;
+  changedBy: { id: string; name: string; role: string };
+}
