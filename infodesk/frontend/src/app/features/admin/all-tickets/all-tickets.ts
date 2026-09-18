@@ -91,7 +91,7 @@ export class AllTickets {
       .subscribe({
         next: (res) => {
           this.tickets.set(res.data);
-          console.log("logs", this.tickets()[0].raisedBy.name)
+          console.log("logs", this.tickets()[0].rasiedBy.name)
           this.total.set(res.total);
           this.totalPages.set(res.totalPages);
           this.loading.set(false);

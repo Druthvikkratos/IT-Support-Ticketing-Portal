@@ -42,19 +42,10 @@ export class TicketService {
 
   findAll(query: TicketsQuery): Observable<PaginatedResponse<Ticket>> {
     return this.http.get<PaginatedResponse<Ticket>>(this.base, { params: this.buildParams(query) })
-    .pipe(
-      map((res) => ({
-        ...res,
-        data: res.data.map((ticket: any) => ({
-          ...ticket,
-          raisedBy: ticket.rasiedBy,
-        })),
-      }))
-    );
   }
 
   findOne(id: string): Observable<Ticket> {
-    return this.http.get<Ticket>(`${this.base}/${id}`);
+    return this.http.get<Ticket>(`${this.base}/${id}`)
   }
 
   create(payload: CreateTicketPayload): Observable<Ticket> {

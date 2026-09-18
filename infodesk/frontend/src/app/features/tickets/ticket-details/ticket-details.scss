@@ -1,0 +1,61 @@
+.detail-row {
+  display: flex;
+  gap: 1rem;
+  padding: .6rem 0;
+  font-size: .875rem;
+}
+.detail-label {
+  color: #64748b;
+  min-width: 150px;
+  flex-shrink: 0;
+}
+.detail-value {
+  color: #0f172a;
+  white-space: pre-wrap; // preserves line breaks the employee typed in the description
+}
+
+.detail-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: #0ea5e9; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 1.25rem;
+}
+.timeline-item {
+  position: relative;
+  padding-bottom: 1.1rem;
+
+  &:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: -.72rem;
+    top: 1rem;
+    bottom: 0;
+    width: 2px;
+    background: #e2e8f0;
+  }
+}
+.timeline-dot {
+  position: absolute;
+  left: -1rem;
+  top: .25rem;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #cbd5e1;
+
+  // reuse the status pill background colors for the dot
+  &.status-raised { background: #3b82f6; }
+  &.status-pending { background: #f59e0b; }
+  &.status-progress { background: #8b5cf6; }
+  &.status-solved { background: #10b981; }
+  &.status-closed { background: #94a3b8; }
+}
+.timeline-time {
+  font-size: .75rem;
+  color: #94a3b8;
+}

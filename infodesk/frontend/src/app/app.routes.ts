@@ -62,6 +62,16 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/all-tickets/all-tickets').then((m) => m.AllTickets),
       },
+      {
+        path: 'tickets/:id/edit',
+        loadComponent: () =>
+          import('./features/employee/edit-ticket/edit-ticket').then((m) => m.EditTicket),
+      },
+      {
+        path: 'tickets/:id',
+        loadComponent: () =>
+          import('./features/tickets/ticket-details/ticket-details').then((m) => m.TicketDetails),
+      },
     ],
   },
   {

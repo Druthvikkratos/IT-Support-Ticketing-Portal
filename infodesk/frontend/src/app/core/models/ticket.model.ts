@@ -13,7 +13,7 @@ export interface Ticket {
   phoneNumber: string;
   customFieldValues: Record<string, any> | null;
   raisedById: string;
-  raisedBy: { id: string; name: string; employeeCode: string | null; email?: string };
+  rasiedBy: { id: string; name: string; employeeCode: string | null; email?: string };
   createdAt: string;
   updatedAt: string;
   closedAt: string | null;
