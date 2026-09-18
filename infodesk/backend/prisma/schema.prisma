@@ -56,10 +56,11 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  createdById   String?               @map("created_by_id")
-  createdBy     User?                 @relation("UserCreatedBy", fields: [createdById], references: [id])
-  createdUsers  User[]                @relation("UserCreatedBy")
-  statusChanges TicketStatusHistory[] @relation("StatusChangedBy")
+  createdById         String?               @map("created_by_id")
+  createdBy           User?                 @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers        User[]                @relation("UserCreatedBy")
+  statusChanges       TicketStatusHistory[] @relation("StatusChangedBy")
+  uploadedAttachments TicketAttachment[]
 
   deletedAt    DateTime? @map("deleted_at")
   deletedById  String?   @map("deleted_by_id")
@@ -112,6 +113,7 @@ model Ticket {
   raisedById    String
   rasiedBy      User                  @relation("RaisedBy", fields: [raisedById], references: [id])
   statusHistory TicketStatusHistory[]
+  attachments   TicketAttachment[]
 
   isDeleted Boolean   @default(false) @map("is_deleted")
   createdAt DateTime  @default(now()) @map("created_at")
@@ -139,4 +141,20 @@ model TicketStatusHistory {
   changedAt   DateTime      @default(now()) @map("changed_at")
 
   @@map("ticket_status_history")
+}
+
+model TicketAttachment {
+  id           String   @id @default(uuid())
+  ticketId     String   @map("ticket_id")
+  ticket       Ticket   @relation(fields: [ticketId], references: [id])
+  fieldInt     Int?     @map("field_int")
+  originalName String   @map("original_name")
+  filePath     String   @map("file_path")
+  fileSize     Int      @map("file_size")
+  detectedMime String   @map("detected_mime")
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  uploadedAt   DateTime @default(now()) @map("uploaded_at")
+
+  @@map("ticket_attachements")
 }
