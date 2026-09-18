@@ -57,8 +57,8 @@ export class TicketsController {
 
   @Patch(':id/status')
   @Roles('admin')
-  updateStatus(@Param('id') id: string, @Body() dto: UpdateTicketStatusDto) {
-    return this.ticketService.updateStatus(id, dto);
+  updateStatus(@Param('id') id: string, @Body() dto: UpdateTicketStatusDto, @CurrentUser() user) {
+    return this.ticketService.updateStatus(id, dto, user.userId);
   }
 
   @Patch(':id/close')

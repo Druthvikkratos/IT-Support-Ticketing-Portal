@@ -56,9 +56,10 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  createdById  String? @map("created_by_id")
-  createdBy    User?   @relation("UserCreatedBy", fields: [createdById], references: [id])
-  createdUsers User[]  @relation("UserCreatedBy")
+  createdById   String?               @map("created_by_id")
+  createdBy     User?                 @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers  User[]                @relation("UserCreatedBy")
+  statusChanges TicketStatusHistory[] @relation("StatusChangedBy")
 
   deletedAt    DateTime? @map("deleted_at")
   deletedById  String?   @map("deleted_by_id")
@@ -108,8 +109,9 @@ model Ticket {
   phoneNumber       String       @map("phone_number")
   customFieldValues Json?        @map("custom_field_values")
 
-  raisedById String
-  rasiedBy   User   @relation("RaisedBy", fields: [raisedById], references: [id])
+  raisedById    String
+  rasiedBy      User                  @relation("RaisedBy", fields: [raisedById], references: [id])
+  statusHistory TicketStatusHistory[]
 
   isDeleted Boolean   @default(false) @map("is_deleted")
   createdAt DateTime  @default(now()) @map("created_at")
@@ -124,4 +126,17 @@ model TicketCounter {
   lastNumber Int @default(0)
 
   @@map("ticket_counter")
+}
+
+model TicketStatusHistory {
+  id          String        @id @default(uuid())
+  ticketId    String        @map("ticket_id")
+  ticket      Ticket        @relation(fields: [ticketId], references: [id])
+  oldStatus   TicketStatus? @map("old_status")
+  newStatus   TicketStatus  @map("new_status")
+  changedById String        @map("changed_by_id")
+  changedBy   User          @relation("StatusChangedBy", fields: [changedById], references: [id])
+  changedAt   DateTime      @default(now()) @map("changed_at")
+
+  @@map("ticket_status_history")
 }

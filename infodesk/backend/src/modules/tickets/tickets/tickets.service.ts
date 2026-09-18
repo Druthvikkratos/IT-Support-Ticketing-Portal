@@ -9,7 +9,7 @@ import {
 import { CreateTicketDto } from '../dto/create-ticket.dto';
 import { PrismaService } from 'src/modules/prisma/prisma/prisma.service';
 import { FindTicketsQueryDto } from '../dto/find-tickets-query.dto';
-import { Prisma, Role } from '@prisma/client';
+import { Prisma, Role, TicketStatus } from '@prisma/client';
 import { generateNextTicketNumber } from 'src/common/utils/ticket-number.util';
 import { UpdateTicketStatusDto } from '../dto/update-ticket-status.dto';
 
@@ -33,12 +33,12 @@ export class TicketsService {
         throw new BadRequestException('Selected issue type is not valid');
       }
       await this.validateCustomFieldValues(dto.customFieldValues);
-      const ticket = await this.prisma.$transaction(async (tx) => {
+      return await this.prisma.$transaction(async (tx) => {
         const ticketNumber = await generateNextTicketNumber(tx as any);
         this.logger.log(
           `Creating ticket record | ticketNumber=${ticketNumber} | raisedById=${raisedById}`,
         );
-        return tx.ticket.create({
+        const ticket = await tx.ticket.create({
           data: {
             ticketNumber,
             title: dto.title,
@@ -54,12 +54,12 @@ export class TicketsService {
             rasiedBy: { select: { id: true, name: true, employeeCode: true } },
           },
         });
+        await this.logStatusChange(tx, ticket.id, null, 'raised', raisedById);
+        this.logger.log(
+          `Create ticket completed | ticketId=${ticket.id} | ticketNumber=${ticket.ticketNumber} | raisedById=${raisedById}`,
+        );
+        return ticket;
       });
-      this.logger.log(
-        `Create ticket completed | ticketId=${ticket.id} | ticketNumber=${ticket.ticketNumber} | raisedById=${raisedById}`,
-      );
-
-      return ticket;
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
@@ -218,6 +218,12 @@ export class TicketsService {
         include: {
           issueType: true,
           rasiedBy: { select: { id: true, name: true, employeeCode: true } },
+          statusHistory: {
+            orderBy: { changedAt: 'asc' },
+            include: {
+              changedBy: { select: { id: true, name: true, role: true } },
+            },
+          },
         },
       });
       if (!ticket || ticket.isDeleted) {
@@ -320,7 +326,11 @@ export class TicketsService {
     }
   }
 
-  async updateStatus(id: string, dto: UpdateTicketStatusDto) {
+  async updateStatus(
+    id: string,
+    dto: UpdateTicketStatusDto,
+    changedById: string,
+  ) {
     this.logger.log(
       `Update ticket status started | ticketId=${id} | newStatus=${dto.status}`,
     );
@@ -332,17 +342,43 @@ export class TicketsService {
         );
         throw new NotFoundException('Ticket not found');
       }
-      const updatedTicket = await this.prisma.ticket.update({
-        where: { id },
-        data: {
-          status: dto.status,
-          closedAt: dto.status === 'closed' ? new Date() : ticket.closedAt,
-        },
+      if (ticket.status === 'closed') {
+        this.logger.warn(
+          `Update ticket status rejected | ticketId=${id} | reason= ticket already closed`,
+        );
+        throw new BadRequestException(
+          'A closed ticket cannot be changed. The employee must raise a new ticket.',
+        );
+      }
+      if (ticket.status === dto.status) {
+        this.logger.warn(
+          `Update ticket status rejected | ticketId=${id} | reason= ticket already in the same status so it cannot be changed`,
+        );
+        throw new BadRequestException(
+          `Ticket is already marked as ${dto.status}`,
+        );
+      }
+      return this.prisma.$transaction(async (tx) => {
+        const updatedTicket = await this.prisma.ticket.update({
+          where: { id },
+          data: {
+            status: dto.status,
+            closedAt: dto.status === 'closed' ? new Date() : ticket.closedAt,
+          },
+        });
+        await this.logStatusChange(
+          tx,
+          id,
+          ticket.status,
+          dto.status,
+          changedById,
+        );
+        this.logger.log(
+          `Update ticket status completed | ticketId=${id} | oldStatus=${ticket.status} | newStatus=${dto.status}`,
+        );
+
+        return updatedTicket;
       });
-      this.logger.log(
-        `Update ticket status completed | ticketId=${id} | oldStatus=${ticket.status} | newStatus=${dto.status}`,
-      );
-      return updatedTicket;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -366,14 +402,12 @@ export class TicketsService {
         this.logger.warn(
           `Close ticket rejected | ticketId=${id} | userId=${userId} | reason=not_found`,
         );
-
         throw new NotFoundException('Ticket not found');
       }
       if (ticket.raisedById !== userId) {
         this.logger.warn(
           `Close ticket forbidden | ticketId=${id} | userId=${userId} | raisedById=${ticket.raisedById}`,
         );
-
         throw new ForbiddenException('You do not have access to this ticket');
       }
       if (ticket.status !== 'solved') {
@@ -382,18 +416,20 @@ export class TicketsService {
         );
         throw new BadRequestException('Only a solved ticket can be closed');
       }
-
-      const closedTicket = await this.prisma.ticket.update({
-        where: { id },
-        data: {
-          status: 'closed',
-          closedAt: new Date(),
-        },
+      return this.prisma.$transaction(async (tx) => {
+        const closedTicket = await this.prisma.ticket.update({
+          where: { id },
+          data: {
+            status: 'closed',
+            closedAt: new Date(),
+          },
+        });
+        await this.logStatusChange(tx, id, ticket.status, 'closed', userId);
+        this.logger.log(
+          `Close ticket by employee completed | ticketId=${id} | userId=${userId}`,
+        );
+        return closedTicket;
       });
-      this.logger.log(
-        `Close ticket by employee completed | ticketId=${id} | userId=${userId}`,
-      );
-      return closedTicket;
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -406,8 +442,24 @@ export class TicketsService {
         `Close ticket by employee failed | ticketId=${id} | userId=${userId}`,
         error instanceof Error ? error.stack : String(error),
       );
-
       throw new InternalServerErrorException('Failed to close ticket');
     }
+  }
+
+  private async logStatusChange(
+    tx: Prisma.TransactionClient,
+    ticketId: string,
+    oldStatus: TicketStatus | null,
+    newStatus: TicketStatus,
+    changedById: string,
+  ) {
+    await tx.ticketStatusHistory.create({
+      data: {
+        ticketId,
+        oldStatus,
+        newStatus,
+        changedById,
+      },
+    });
   }
 }
