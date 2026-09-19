@@ -1,8 +1,15 @@
 <div class="topbar d-flex align-items-center justify-content-between px-4">
   <div></div>
 
+  @if (idleSessionService.showWarning()) {
+  <div class="session-warning">
+    <i class="ti ti-clock-exclamation"></i>
+    <span>Session expires in <strong>{{ formattedCountdown() }}</strong></span>
+    <button class="btn btn-sm btn-warning-solid ms-2" (click)="staySignedIn()">Stay Logged In</button>
+  </div>
+}
   <div class="dropdown">
-    <button class="btn user-chip dropdown-toggle" data-bs-toggle="dropdown">
+    <button  type="button" class="btn user-chip dropdown-toggle" data-bs-toggle="dropdown">
       <div class="avatar">{{ authService.currentUser()?.name?.charAt(0) }}</div>
       <span class="ms-2">{{ authService.currentUser()?.name }}</span>
     </button>

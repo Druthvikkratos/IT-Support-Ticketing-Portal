@@ -224,16 +224,15 @@ export class TicketsService {
               changedBy: { select: { id: true, name: true, role: true } },
             },
           },
+          attachments: true
         },
       });
       if (!ticket || ticket.isDeleted) {
         this.logger.warn(
           `Find ticket rejected | ticketId=${id} | reason=not_found | userId=${requestingUser.userId}`,
         );
-
         throw new NotFoundException('Ticket not found');
       }
-
       if (
         requestingUser.role === Role.employee &&
         requestingUser.userId !== ticket.raisedById
@@ -241,7 +240,6 @@ export class TicketsService {
         this.logger.warn(
           `Find ticket forbidden | ticketId=${id} | requestingUserId=${requestingUser.userId} | raisedById=${ticket.raisedById}`,
         );
-
         throw new ForbiddenException('You do not have access to this ticket');
       }
       this.logger.log(
@@ -255,12 +253,10 @@ export class TicketsService {
       ) {
         throw error;
       }
-
       this.logger.error(
         `Find ticket failed | ticketId=${id} | userId=${requestingUser.userId}`,
         error instanceof Error ? error.stack : String(error),
       );
-
       throw new InternalServerErrorException('Failed to fetch ticket');
     }
   }
@@ -275,7 +271,6 @@ export class TicketsService {
         this.logger.warn(
           `Update employee ticket rejected | ticketId=${id} | userId=${userId} | reason=not_found`,
         );
-
         throw new NotFoundException('Ticket not found');
       }
       if (ticket.raisedById !== userId) {
@@ -293,7 +288,6 @@ export class TicketsService {
         );
       }
       await this.validateCustomFieldValues(dto.customFieldValues);
-
       const updatedTicket = await this.prisma.ticket.update({
         where: { id },
         data: {
@@ -321,7 +315,6 @@ export class TicketsService {
         `Update employee ticket failed | ticketId=${id} | userId=${userId}`,
         error instanceof Error ? error.stack : String(error),
       );
-
       throw new InternalServerErrorException('Failed to update ticket');
     }
   }

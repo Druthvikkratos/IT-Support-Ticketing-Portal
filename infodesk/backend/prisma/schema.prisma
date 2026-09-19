@@ -147,7 +147,7 @@ model TicketAttachment {
   id           String   @id @default(uuid())
   ticketId     String   @map("ticket_id")
   ticket       Ticket   @relation(fields: [ticketId], references: [id])
-  fieldInt     Int?     @map("field_int")
+  fieldId     Int?     @map("field_int")
   originalName String   @map("original_name")
   filePath     String   @map("file_path")
   fileSize     Int      @map("file_size")
