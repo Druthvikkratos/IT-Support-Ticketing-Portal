@@ -7,6 +7,7 @@ import { STATUS_CONFIG, Ticket, TicketStatus } from '../../../core/models/ticket
 import { FormField } from '../../../core/models/form-field.model';
 import Swal from 'sweetalert2';
 import { CommonModule } from '@angular/common';
+import { AttachementService } from '../../../core/services/attachement-service';
 
 @Component({
   selector: 'app-ticket-details',
@@ -20,6 +21,7 @@ export class TicketDetails {
   private ticketsService = inject(TicketService);
   private formFieldsService = inject(FormFieldsService);
   authService = inject(AuthService);
+  private attachementService = inject(AttachementService);
 
   statusConfig = STATUS_CONFIG;
 
@@ -177,5 +179,23 @@ export class TicketDetails {
   }
   statusClass(status: TicketStatus) {
     return this.statusConfig[status].class;
+  }
+
+  attachmentDownloadUrl(ticketId: string, attachmentId: string): string {
+    return this.attachementService.downloadUrl(ticketId, attachmentId);
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  attachmentViewUrl(ticketId: string, attachmentId: string): string {
+    return this.attachementService.viewUrl(ticketId, attachmentId);
+  }
+
+  openInNewTab(url: string) {
+    window.open(url, '_blank');
   }
 }

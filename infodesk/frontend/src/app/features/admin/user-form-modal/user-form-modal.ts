@@ -1,4 +1,12 @@
-import { Component, EventEmitter, inject, Input, Output, signal, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  inject,
+  Input,
+  Output,
+  signal,
+  SimpleChanges,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { User } from '../../../core/models/user.model';
 import { UserService } from '../../../core/services/user-service';
@@ -21,6 +29,7 @@ export class UserFormModal {
   submitting = signal(false);
   errorMessage = signal<string | null>(null);
   successInfo = signal<string | null>(null);
+  showAdminPassword = signal(false);
 
   adminForm = this.fb.nonNullable.group({
     name: ['', Validators.required],
@@ -71,13 +80,14 @@ export class UserFormModal {
     this.errorMessage.set(null);
     this.submitting.set(true);
 
-    const request$ = this.isEditMode() && this.editingUser
-      ? this.role() === 'admin'
-        ? this.userService.updateAdmin(this.editingUser.id, this.adminForm.getRawValue())
-        : this.userService.updateEmployee(this.editingUser.id, this.employeeForm.getRawValue())
-      : this.role() === 'admin'
-        ? this.userService.createAdmin(this.adminForm.getRawValue())
-        : this.userService.createEmployee(this.employeeForm.getRawValue());
+    const request$ =
+      this.isEditMode() && this.editingUser
+        ? this.role() === 'admin'
+          ? this.userService.updateAdmin(this.editingUser.id, this.adminForm.getRawValue())
+          : this.userService.updateEmployee(this.editingUser.id, this.employeeForm.getRawValue())
+        : this.role() === 'admin'
+          ? this.userService.createAdmin(this.adminForm.getRawValue())
+          : this.userService.createEmployee(this.employeeForm.getRawValue());
 
     request$.subscribe({
       next: () => {
@@ -95,6 +105,10 @@ export class UserFormModal {
         this.errorMessage.set(err.error?.message || 'Something went wrong');
       },
     });
+  }
+
+  toggleAdminPasswordVisibility() {
+    this.showAdminPassword.update((v) => !v);
   }
 
   close(refresh: boolean) {

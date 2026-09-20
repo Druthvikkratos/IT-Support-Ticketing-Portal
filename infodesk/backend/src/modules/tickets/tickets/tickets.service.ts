@@ -79,8 +79,9 @@ export class TicketsService {
         where: { isActive: true },
       });
       for (const field of activeFields) {
-        const answer = values?.[field.id];
+        if (field.fieldType === 'file') continue;
 
+        const answer = values?.[field.id];
         if (
           field.isRequired &&
           (answer === null || answer === '' || answer === undefined)

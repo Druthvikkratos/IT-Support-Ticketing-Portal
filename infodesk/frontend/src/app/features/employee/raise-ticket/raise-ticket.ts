@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ViewChild, viewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TicketService } from '../../../core/services/ticket-service';
 import { IssueTypesService } from '../../../core/services/issue-types';
@@ -19,6 +19,9 @@ import { CreateTicketPayload } from '../../../core/models/ticket.model';
   styleUrl: './raise-ticket.scss',
 })
 export class RaiseTicket {
+
+ @ViewChild(TicketForm) ticketForm!: TicketForm;
+
   private ticketService = inject(TicketService);
   private router = inject(Router);
   private location = inject(Location);
@@ -28,7 +31,8 @@ export class RaiseTicket {
   onSubmit(payload: CreateTicketPayload) {
     this.isSubmitting.set(true);
     this.ticketService.create(payload).subscribe({
-      next: (ticket) => {
+      next: async (ticket) => {
+        await this.ticketForm.uploadPendingFiles(ticket.id)
         this.isSubmitting.set(false);
         Swal.fire({
           icon: 'success',

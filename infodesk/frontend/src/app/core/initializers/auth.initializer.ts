@@ -1,21 +1,26 @@
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth-service';
 import { catchError, finalize, firstValueFrom, of, tap } from 'rxjs';
-import { IdleSession } from '../services/idle-session';
+import { SessionTimerService } from '../services/session-timer-service';
 
 export function initializeAuth() {
-  const authService = inject(AuthService);
-  const idleSessionService = inject(IdleSession)
+  const authService = inject(AuthService)
+  const sessionTimerService = inject(SessionTimerService);
+
+  localStorage.removeItem('infodesk_last_activity');
 
   return firstValueFrom(
     authService.loadCurrentUser().pipe(
       tap((user) => {
-        if(user.role === 'employee' && idleSessionService.hasExceededIdleLimitForStorage()){
-          authService.logout()
+        if (
+          user.role === 'employee' &&
+          !sessionTimerService.hasActiveSession()
+        ) {
+          sessionTimerService.startSession();
         }
       }),
-      catchError(() => of(null)), // no valid session — continue as logged out
-      finalize(() => authService.markInitialized()),
-    ),
+      catchError(() => of(null)),
+      finalize(() => authService.markInitialized())
+    )
   );
 }

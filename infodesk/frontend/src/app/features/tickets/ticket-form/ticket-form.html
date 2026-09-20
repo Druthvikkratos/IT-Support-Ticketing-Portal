@@ -11,37 +11,57 @@
         <div class="mb-3">
           <label class="form-label small fw-medium">Title <span class="text-danger">*</span></label>
           <input
-            class="form-control" formControlName="title"
-            placeholder="Brief summary of the issue" maxlength="150"
+            class="form-control"
+            formControlName="title"
+            placeholder="Brief summary of the issue"
+            maxlength="150"
             [class.is-invalid]="isInvalid(form, 'title')"
           />
-          @if (isInvalid(form, 'title')) { <div class="invalid-feedback">Title is required.</div> }
+          @if (isInvalid(form, 'title')) {
+            <div class="invalid-feedback">Title is required.</div>
+          }
         </div>
 
         <div class="mb-3">
-          <label class="form-label small fw-medium">Description <span class="text-danger">*</span></label>
+          <label class="form-label small fw-medium"
+            >Description <span class="text-danger">*</span></label
+          >
           <textarea
-            class="form-control" rows="4" formControlName="description"
+            class="form-control"
+            rows="4"
+            formControlName="description"
             placeholder="Describe the issue in detail — what happened, when it started, what you've already tried"
             [class.is-invalid]="isInvalid(form, 'description')"
           ></textarea>
-          @if (isInvalid(form, 'description')) { <div class="invalid-feedback">Description is required.</div> }
+          @if (isInvalid(form, 'description')) {
+            <div class="invalid-feedback">Description is required.</div>
+          }
         </div>
 
         <div class="row g-3 mb-3">
           <div class="col-md-6">
-            <label class="form-label small fw-medium">Issue Type <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="issueTypeId" [class.is-invalid]="isInvalid(form, 'issueTypeId')">
+            <label class="form-label small fw-medium"
+              >Issue Type <span class="text-danger">*</span></label
+            >
+            <select
+              class="form-select"
+              formControlName="issueTypeId"
+              [class.is-invalid]="isInvalid(form, 'issueTypeId')"
+            >
               <option [ngValue]="null" disabled>Select issue type...</option>
               @for (type of issueTypes(); track type.id) {
                 <option [ngValue]="type.id">{{ type.name }}</option>
               }
             </select>
-            @if (isInvalid(form, 'issueTypeId')) { <div class="invalid-feedback">Please select an issue type.</div> }
+            @if (isInvalid(form, 'issueTypeId')) {
+              <div class="invalid-feedback">Please select an issue type.</div>
+            }
           </div>
 
           <div class="col-md-6">
-            <label class="form-label small fw-medium">Priority <span class="text-danger">*</span></label>
+            <label class="form-label small fw-medium"
+              >Priority <span class="text-danger">*</span></label
+            >
             <select class="form-select" formControlName="priority">
               <option value="low">Low</option>
               <option value="high">High</option>
@@ -50,13 +70,23 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label small fw-medium">Contact Phone Number <span class="text-danger">*</span></label>
+          <label class="form-label small fw-medium"
+            >Contact Phone Number <span class="text-danger">*</span></label
+          >
           <input
-            class="form-control" formControlName="phoneNumber"
-            placeholder="So IT can reach you directly"
+            class="form-control"
+            formControlName="phoneNumber"
+            placeholder="10-digit number"
             [class.is-invalid]="isInvalid(form, 'phoneNumber')"
+            maxlength="10"
+            (keypress)="numericOnly($event)"
           />
-          @if (isInvalid(form, 'phoneNumber')) { <div class="invalid-feedback">Phone number is required.</div> }
+          @if (form.get('phoneNumber')?.errors?.['required'] && form.get('phoneNumber')?.touched) {
+            <div class="invalid-feedback d-block">Phone number is required.</div>
+          }
+          @if (form.get('phoneNumber')?.errors?.['pattern'] && form.get('phoneNumber')?.touched) {
+            <div class="invalid-feedback d-block">Enter a valid 10-digit phone number.</div>
+          }
         </div>
 
         @if (customFields().length > 0) {
@@ -67,27 +97,52 @@
             @for (field of customFields(); track field.id) {
               <div class="mb-3">
                 <label class="form-label small fw-medium">
-                  {{ field.label }} @if (field.isRequired) { <span class="text-danger">*</span> }
+                  {{ field.label }}
+                  @if (field.isRequired) {
+                    <span class="text-danger">*</span>
+                  }
                 </label>
 
                 @switch (field.fieldType) {
-                  @case ('text') { <input class="form-control" [formControlName]="field.id" /> }
-                  @case ('textarea') { <textarea class="form-control" rows="3" [formControlName]="field.id"></textarea> }
-                  @case ('number') { <input type="number" class="form-control" [formControlName]="field.id" /> }
-                  @case ('date') { <input type="date" class="form-control" [formControlName]="field.id" /> }
-                  @case ('phone') { <input type="tel" class="form-control" [formControlName]="field.id" /> }
-                  @case ('email') { <input type="email" class="form-control" [formControlName]="field.id" /> }
+                  @case ('text') {
+                    <input class="form-control" [formControlName]="field.id" />
+                  }
+                  @case ('textarea') {
+                    <textarea class="form-control" rows="3" [formControlName]="field.id"></textarea>
+                  }
+                  @case ('number') {
+                    <input type="number" class="form-control" [formControlName]="field.id" />
+                  }
+                  @case ('date') {
+                    <input type="date" class="form-control" [formControlName]="field.id" />
+                  }
+                  @case ('phone') {
+                    <input type="tel" class="form-control" [formControlName]="field.id" />
+                  }
+                  @case ('email') {
+                    <input type="email" class="form-control" [formControlName]="field.id" />
+                  }
                   @case ('dropdown') {
                     <select class="form-select" [formControlName]="field.id">
                       <option value="" disabled>Select an option...</option>
-                      @for (opt of field.options; track opt) { <option [value]="opt">{{ opt }}</option> }
+                      @for (opt of field.options; track opt) {
+                        <option [value]="opt">{{ opt }}</option>
+                      }
                     </select>
                   }
                   @case ('radio') {
                     @for (opt of field.options; track opt) {
                       <div class="form-check">
-                        <input class="form-check-input" type="radio" [formControlName]="field.id.toString()" [value]="opt" [id]="'f' + field.id + '-' + opt" />
-                        <label class="form-check-label small" [for]="'f' + field.id + '-' + opt">{{ opt }}</label>
+                        <input
+                          class="form-check-input"
+                          type="radio"
+                          [formControlName]="field.id.toString()"
+                          [value]="opt"
+                          [id]="'f' + field.id + '-' + opt"
+                        />
+                        <label class="form-check-label small" [for]="'f' + field.id + '-' + opt">{{
+                          opt
+                        }}</label>
                       </div>
                     }
                   }
@@ -95,19 +150,74 @@
                     @for (opt of field.options; track opt) {
                       <div class="form-check">
                         <input
-                          class="form-check-input" type="checkbox" [id]="'f' + field.id + '-' + opt"
+                          class="form-check-input"
+                          type="checkbox"
+                          [id]="'f' + field.id + '-' + opt"
                           [checked]="isCheckboxSelected(field.id, opt)"
                           (change)="toggleCheckboxOption(field.id, opt)"
                         />
-                        <label class="form-check-label small" [for]="'f' + field.id + '-' + opt">{{ opt }}</label>
+                        <label class="form-check-label small" [for]="'f' + field.id + '-' + opt">{{
+                          opt
+                        }}</label>
                       </div>
                     }
                   }
                   @case ('file') {
-                    <div class="file-placeholder">
-                      <i class="ti ti-cloud-upload"></i>
-                      <div class="small mt-1">File upload coming soon</div>
+                    <input
+                      #fileInputEl
+                      type="file"
+                      class="d-none"
+                      [multiple]="field.fileConfig?.allowMultiple ?? false"
+                      (change)="onFilesSelected(field.id, $event, fileInputEl)"
+                    />
+
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary d-flex align-items-center gap-2"
+                      (click)="fileInputEl.click()"
+                    >
+                      <i class="ti ti-paperclip"></i>
+                      {{ fileButtonLabel(field) }}
+                    </button>
+
+                    <div class="form-text">
+                      Accepted: {{ field.fileConfig?.allowedCategories?.join(', ') }} · Max
+                      {{ field.fileConfig?.maxSizeMB }}MB
+                      {{ field.fileConfig?.allowMultiple ? 'per file' : '' }}
                     </div>
+
+                    @if (fileErrors()[field.id]) {
+                      <div class="text-danger small mt-1">{{ fileErrors()[field.id] }}</div>
+                    }
+
+                    @if (selectedFiles()[field.id]?.length) {
+                      <div class="mt-2 d-flex flex-column gap-1">
+                        <div class="small text-muted fw-medium">
+                          {{ selectedFiles()[field.id]!.length }} file(s) selected:
+                        </div>
+                        @for (file of selectedFiles()[field.id]; track file.name; let i = $index) {
+                          <div class="selected-file-chip">
+                            <i class="ti ti-paperclip"></i>
+                            <span class="flex-grow-1">{{ file.name }}</span>
+                            <span class="text-muted small">{{ formatFileSize(file.size) }}</span>
+                            <i
+                              class="ti ti-x"
+                              role="button"
+                              (click)="removeSelectedFile(field.id, i, fileInputEl)"
+                            ></i>
+                          </div>
+                        }
+                        @if (selectedFiles()[field.id]!.length > 1) {
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-link text-danger p-0 text-start"
+                            (click)="clearSelectedFiles(field.id, fileInputEl)"
+                          >
+                            Clear all
+                          </button>
+                        }
+                      </div>
+                    }
                   }
                 }
               </div>
@@ -115,7 +225,9 @@
           </div>
         }
         <button type="submit" class="btn btn-primary float-end mt-3" [disabled]="submitting">
-          @if (submitting) { <span class="spinner-border spinner-border-sm me-2"></span> }
+          @if (submitting) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
           {{ submitLabel }}
         </button>
       </form>

@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { User } from '../models/user.model';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { IDLE_STORAGE_KEY } from './idle-session';
 
 @Injectable({
   providedIn: 'root',
@@ -35,7 +34,6 @@ export class AuthService {
     this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true }).subscribe({
       complete: () => {
         this.currentUserSignal.set(null);
-        localStorage.removeItem(IDLE_STORAGE_KEY)
         this.router.navigate(['/login']);
       },
     });

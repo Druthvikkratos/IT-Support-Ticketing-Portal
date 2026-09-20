@@ -20,6 +20,8 @@ import {
 } from '../multer.config';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import express from 'express';
+import express_1 from 'express';
+import { resolve } from 'path';
 
 @Controller('tickets/:ticketId/attachments')
 @UseGuards(JwtAuthGaurd, RolesGaurd)
@@ -61,5 +63,24 @@ export class AttachementsController {
       user,
     );
     res.download(attachment.filePath, attachment.originalName);
+  }
+
+  @Get(':attachmentId/view')
+  async view(
+    @Param('attachmentId') attachmentId: string,
+    @CurrentUser() user,
+    @Res() res: express_1.Response,
+  ) {
+    const attachment = await this.attachementService.getForDownload(
+      attachmentId,
+      user,
+    );
+
+    res.setHeader('Content-Type', attachment.detectedMime);
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${attachment.originalName}"`,
+    );
+    res.sendFile(resolve(attachment.filePath));
   }
 }

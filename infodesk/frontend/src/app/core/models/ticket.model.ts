@@ -1,3 +1,5 @@
+import { TicketAttachment } from "./attachment.model";
+
 export type Priority = 'low' | 'high';
 export type TicketStatus = 'raised' | 'pending' | 'in_progress' | 'solved' | 'closed';
 
@@ -18,6 +20,7 @@ export interface Ticket {
   updatedAt: string;
   closedAt: string | null;
   statusHistory?: TicketStatusHistoryEntry[];
+  attachments? : TicketAttachment[]
 }
 
 export interface CreateTicketPayload {

@@ -1,22 +1,33 @@
 <div class="topbar d-flex align-items-center justify-content-between px-4">
   <div></div>
-
-  @if (idleSessionService.showWarning()) {
-  <div class="session-warning">
-    <i class="ti ti-clock-exclamation"></i>
-    <span>Session expires in <strong>{{ formattedCountdown() }}</strong></span>
-    <button class="btn btn-sm btn-warning-solid ms-2" (click)="staySignedIn()">Stay Logged In</button>
-  </div>
-}
+  @if (sessionTimerService.showTimer()) {
+    <div class="session-timer" [class.session-timer-urgent]="sessionTimerService.isUrgent()">
+      <i class="ti ti-clock"></i>
+      <span>{{ sessionTimerService.formattedRemaining() }}</span>
+      @if (sessionTimerService.isUrgent()) {
+        <button class="btn btn-sm btn-warning-solid ms-1" (click)="staySignedIn()">
+          Stay Logged In
+        </button>
+      }
+    </div>
+  }
   <div class="dropdown">
-    <button  type="button" class="btn user-chip dropdown-toggle" data-bs-toggle="dropdown">
+    <button type="button" class="btn user-chip dropdown-toggle" data-bs-toggle="dropdown">
       <div class="avatar">{{ authService.currentUser()?.name?.charAt(0) }}</div>
       <span class="ms-2">{{ authService.currentUser()?.name }}</span>
     </button>
     <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-      <li><span class="dropdown-item-text small text-muted">{{ authService.currentUser()?.email }}</span></li>
+      <li>
+        <span class="dropdown-item-text small text-muted">{{
+          authService.currentUser()?.email
+        }}</span>
+      </li>
       <li><hr class="dropdown-divider" /></li>
-      <li><button class="dropdown-item text-danger" (click)="logout()"><i class="ti ti-logout me-2"></i>Logout</button></li>
+      <li>
+        <button class="dropdown-item text-danger" (click)="logout()">
+          <i class="ti ti-logout me-2"></i>Logout
+        </button>
+      </li>
     </ul>
   </div>
 </div>

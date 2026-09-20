@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { AuthService } from '../../../core/services/auth-service';
-import { IdleSession } from '../../../core/services/idle-session';
+import { SessionTimerService } from '../../../core/services/session-timer-service';
 
 @Component({
   selector: 'app-topbar-component',
@@ -10,20 +10,14 @@ import { IdleSession } from '../../../core/services/idle-session';
 })
 export class TopbarComponent {
   authService = inject(AuthService);
-  idleSessionService = inject(IdleSession);
+  sessionTimerService = inject(SessionTimerService);
 
   logout() {
+    this.sessionTimerService.clearSession()
     this.authService.logout();
   }
 
-  staySignedIn() {
-    this.idleSessionService.extendSession();
-  }
-
-  formattedCountdown(): string {
-    const total = this.idleSessionService.secondsRemaining();
-    const minutes = Math.floor(total / 60);
-    const seconds = total % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  staySignedIn(){
+    this.sessionTimerService.extendSession()
   }
 }

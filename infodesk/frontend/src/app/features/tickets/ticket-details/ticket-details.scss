@@ -59,3 +59,18 @@
   font-size: .75rem;
   color: #94a3b8;
 }
+
+.attachment-row {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .6rem .8rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #0f172a;
+  transition: background-color .15s ease;
+
+  &:hover { background: #f8fafc; }
+  i.ti-file { color: #64748b; }
+  i.ti-download { color: #94a3b8; }
+}

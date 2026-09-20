@@ -1,5 +1,5 @@
 <div class="login-page d-flex align-items-center justify-content-center vh-100">
-  <div class="card shadow-lg border-0" style="width: 400px;">
+  <div class="card shadow-lg border-0" style="width: 400px">
     <div class="card-body p-4">
       <div class="text-center mb-4">
         <div class="brand-badge mx-auto mb-3">ID</div>
@@ -20,14 +20,37 @@
 
         <div class="mb-3">
           <label class="form-label small text-muted">Password</label>
-          <input type="password" class="form-control" formControlName="password" placeholder="••••••••" />
+          <div class="password-input-wrapper">
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              class="form-control"
+              formControlName="password"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              class="password-toggle-btn"
+              (click)="togglePasswordVisibility()"
+              [title]="showPassword() ? 'Hide password' : 'Show password'"
+            >
+              <i
+                class="ti"
+                [class.ti-eye]="!showPassword()"
+                [class.ti-eye-off]="showPassword()"
+              ></i>
+            </button>
+          </div>
         </div>
 
         @if (errorMessage()) {
           <div class="alert alert-danger py-2 small">{{ errorMessage() }}</div>
         }
 
-        <button type="submit" class="btn btn-primary w-100 mt-2" [disabled]="form.invalid || loading()">
+        <button
+          type="submit"
+          class="btn btn-primary w-100 mt-2"
+          [disabled]="form.invalid || loading()"
+        >
           @if (loading()) {
             <span class="spinner-border spinner-border-sm me-2"></span>
           }

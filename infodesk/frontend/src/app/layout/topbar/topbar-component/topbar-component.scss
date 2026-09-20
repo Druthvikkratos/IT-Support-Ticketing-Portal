@@ -14,18 +14,25 @@
   font-size: .8rem; font-weight: 600;
 }
 
-.session-warning {
+.session-timer {
   display: flex;
   align-items: center;
-  gap: .5rem;
-  background: #fffbeb;
-  color: #b45309;
-  padding: .4rem .8rem;
+  gap: .4rem;
+  background: #f1f5f9;
+  color: #64748b;
+  padding: .35rem .75rem;
   border-radius: 8px;
   font-size: .82rem;
+  font-variant-numeric: tabular-nums;
   margin-right: 1rem;
+  transition: background-color .2s ease, color .2s ease;
 
-  i { font-size: 1rem; }
+  i { font-size: .95rem; }
+
+  &.session-timer-urgent {
+    background: #fffbeb;
+    color: #b45309;
+  }
 }
 .btn-warning-solid {
   background: #f59e0b;
@@ -33,6 +40,5 @@
   color: #fff;
   font-size: .78rem;
   padding: .2rem .6rem;
-
   &:hover { background: #d97706; color: #fff; }
 }

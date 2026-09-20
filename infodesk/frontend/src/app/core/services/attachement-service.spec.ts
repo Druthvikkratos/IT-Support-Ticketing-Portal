@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { IdleSession } from './idle-session';
+import { AttachementService } from './attachement-service';
 
-describe('IdleSession', () => {
-  let service: IdleSession;
+describe('AttachementService', () => {
+  let service: AttachementService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(IdleSession);
+    service = TestBed.inject(AttachementService);
   });
 
   it('should be created', () => {

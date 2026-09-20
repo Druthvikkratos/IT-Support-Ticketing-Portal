@@ -10,3 +10,18 @@
     font-size: 1.5rem;
   }
 }
+
+.selected-file-chip {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: .4rem .7rem;
+  font-size: .82rem;
+
+  i.ti-paperclip { color: #94a3b8; }
+  i.ti-x { cursor: pointer; color: #94a3b8; }
+  i.ti-x:hover { color: #dc2626; }
+}

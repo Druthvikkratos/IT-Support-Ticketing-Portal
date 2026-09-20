@@ -5,7 +5,10 @@
 } @else if (ticket(); as t) {
   <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
-      <a [routerLink]="authService.isAdmin() ? '/tickets' : '/my-tickets'" class="text-muted small text-decoration-none">
+      <a
+        [routerLink]="authService.isAdmin() ? '/tickets' : '/my-tickets'"
+        class="text-muted small text-decoration-none"
+      >
         <i class="ti ti-arrow-left"></i> Back to tickets
       </a>
       <div class="d-flex align-items-center gap-2 mt-2">
@@ -13,7 +16,11 @@
         <span class="status-pill" [class]="statusClass(t.status)">
           <span class="status-dot"></span>{{ statusLabel(t.status) }}
         </span>
-        <span class="priority-pill" [class.priority-high]="t.priority === 'high'" [class.priority-low]="t.priority === 'low'">
+        <span
+          class="priority-pill"
+          [class.priority-high]="t.priority === 'high'"
+          [class.priority-low]="t.priority === 'low'"
+        >
           {{ t.priority }}
         </span>
       </div>
@@ -22,12 +29,19 @@
 
     <div class="d-flex gap-2">
       @if (canEdit()) {
-        <a [routerLink]="['/tickets', t.id, 'edit']" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+        <a
+          [routerLink]="['/tickets', t.id, 'edit']"
+          class="btn btn-outline-secondary d-flex align-items-center gap-2"
+        >
           <i class="ti ti-edit"></i> Edit
         </a>
       }
       @if (canClose()) {
-        <button class="btn btn-success d-flex align-items-center gap-2" [disabled]="updating()" (click)="closeTicket()">
+        <button
+          class="btn btn-success d-flex align-items-center gap-2"
+          [disabled]="updating()"
+          (click)="closeTicket()"
+        >
           <i class="ti ti-circle-check"></i> Close Ticket
         </button>
       }
@@ -54,10 +68,45 @@
             <span class="detail-label">Contact Number</span>
             <span class="detail-value">{{ t.phoneNumber }}</span>
           </div>
-
+          @if (t.attachments && t.attachments.length > 0) {
+            <div class="card border-0 shadow-sm mb-4">
+              <div class="card-header bg-white py-3">
+                <span class="fw-semibold small text-muted"
+                  >ATTACHMENTS ({{ t.attachments.length }})</span
+                >
+              </div>
+              <div class="card-body">
+                <div class="d-flex flex-column gap-2">
+                  @for (file of t.attachments; track file.id) {
+                    <div class="attachment-row">
+                      <i class="ti ti-file"></i>
+                      <span class="flex-grow-1">{{ file.originalName }}</span>
+                      <span class="text-muted small">{{ formatFileSize(file.fileSize) }}</span>
+                      <button
+                        class="icon-btn icon-btn-edit"
+                        title="View"
+                        (click)="openInNewTab(attachmentViewUrl(t.id, file.id))"
+                      >
+                        <i class="ti ti-eye"></i>
+                      </button>
+                      <a
+                        class="icon-btn"
+                        title="Download"
+                        [href]="attachmentDownloadUrl(t.id, file.id)"
+                      >
+                        <i class="ti ti-download"></i>
+                      </a>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          }
           @if (customFieldAnswers().length > 0) {
             <hr class="my-3" />
-            <div class="text-uppercase small text-muted fw-semibold mb-3">Additional Information</div>
+            <div class="text-uppercase small text-muted fw-semibold mb-3">
+              Additional Information
+            </div>
             @for (entry of customFieldAnswers(); track entry.label) {
               <div class="detail-row">
                 <span class="detail-label">{{ entry.label }}</span>
@@ -99,7 +148,8 @@
       @if (t.status === 'closed') {
         <div class="alert alert-secondary d-flex align-items-center gap-2 mb-0">
           <i class="ti ti-lock"></i>
-          This ticket was closed on {{ t.closedAt | date: 'MMM d, y, h:mm a' }} and cannot be reopened.
+          This ticket was closed on {{ t.closedAt | date: 'MMM d, y, h:mm a' }} and cannot be
+          reopened.
         </div>
       }
     </div>
@@ -116,7 +166,9 @@
             <div>
               <div class="fw-medium">{{ t.rasiedBy.name }}</div>
               <div class="small text-muted">{{ t.rasiedBy.employeeCode }}</div>
-              @if (t.rasiedBy.email) { <div class="small text-muted">{{ t.rasiedBy.email }}</div> }
+              @if (t.rasiedBy.email) {
+                <div class="small text-muted">{{ t.rasiedBy.email }}</div>
+              }
             </div>
           </div>
           <hr class="my-3" />
