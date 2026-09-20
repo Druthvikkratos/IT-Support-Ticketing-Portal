@@ -67,7 +67,8 @@ model User {
   deletedBy    User?     @relation("UserDeletedBy", fields: [deletedById], references: [id])
   deletedUsers User[]    @relation("UserDeletedBy")
 
-  ticketsRaised Ticket[] @relation("RaisedBy")
+  ticketsRaised  Ticket[]        @relation("RaisedBy")
+  ticketMessages TicketMessage[]
 
   @@map("users")
 }
@@ -115,10 +116,11 @@ model Ticket {
   statusHistory TicketStatusHistory[]
   attachments   TicketAttachment[]
 
-  isDeleted Boolean   @default(false) @map("is_deleted")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  closedAt  DateTime? @map("closed_at")
+  isDeleted      Boolean         @default(false) @map("is_deleted")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  closedAt       DateTime?       @map("closed_at")
+  ticketMessages TicketMessage[]
 
   @@map("tickets")
 }
@@ -147,7 +149,7 @@ model TicketAttachment {
   id           String   @id @default(uuid())
   ticketId     String   @map("ticket_id")
   ticket       Ticket   @relation(fields: [ticketId], references: [id])
-  fieldId     Int?     @map("field_int")
+  fieldId      Int?     @map("field_int")
   originalName String   @map("original_name")
   filePath     String   @map("file_path")
   fileSize     Int      @map("file_size")
@@ -157,4 +159,17 @@ model TicketAttachment {
   uploadedAt   DateTime @default(now()) @map("uploaded_at")
 
   @@map("ticket_attachements")
+}
+
+model TicketMessage {
+  id             String   @id @default(uuid())
+  ticketId       String   @map("ticket_id")
+  ticket         Ticket   @relation(fields: [ticketId], references: [id])
+  senderId       String   @map("sender_id")
+  sender         User     @relation(fields: [senderId], references: [id])
+  message        String?  @db.Text
+  attachmentPath String?  @map("attachement_path")
+  createdAt      DateTime @default(now())
+
+  @@map("ticket_messages")
 }
