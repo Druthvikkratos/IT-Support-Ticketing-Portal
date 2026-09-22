@@ -8,9 +8,10 @@ import { IssueTypesModule } from './modules/issue-types/issue-types/issue-types.
 import { FormFieldsModule } from './modules/form-fields/form-fields/form-fields.module';
 import { TicketsModule } from './modules/tickets/tickets/tickets.module';
 import { AttachementsModule } from './modules/tickets/attachments/attachements/attachements.module';
+import { ChatModule } from './modules/tickets/chat/chat/chat.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsersModule, IssueTypesModule, FormFieldsModule, TicketsModule, AttachementsModule],
+  imports: [PrismaModule, AuthModule, UsersModule, IssueTypesModule, FormFieldsModule, TicketsModule, AttachementsModule, ChatModule],
   controllers: [AppController],
   providers: [AppService],
 })
