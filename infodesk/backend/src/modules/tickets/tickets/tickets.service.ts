@@ -12,11 +12,15 @@ import { FindTicketsQueryDto } from '../dto/find-tickets-query.dto';
 import { Prisma, Role, TicketStatus } from '@prisma/client';
 import { generateNextTicketNumber } from 'src/common/utils/ticket-number.util';
 import { UpdateTicketStatusDto } from '../dto/update-ticket-status.dto';
+import { ChatService } from '../chat/chat/chat.service';
 
 @Injectable()
 export class TicketsService {
   private readonly logger = new Logger(TicketsService.name);
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private chatService: ChatService,
+  ) {}
 
   async createTicket(dto: CreateTicketDto, raisedById: string) {
     this.logger.log(
@@ -123,7 +127,10 @@ export class TicketsService {
       `Find employee tickets started | userId=${userId} | page=${query.page ?? 1} | limit=${query.limit ?? 10}`,
     );
     try {
-      const result = await this.findAll({ ...query, raisedById: userId });
+      const result = await this.findAll(
+        { ...query, raisedById: userId },
+        userId,
+      );
       this.logger.log(
         `Find employee tickets completed | userId=${userId} | total=${result.total}`,
       );
@@ -137,12 +144,15 @@ export class TicketsService {
     }
   }
 
-  async findAllTicketsForAdmin(query: FindTicketsQueryDto) {
+  async findAllTicketsForAdmin(
+    query: FindTicketsQueryDto,
+    adminUserId: string,
+  ) {
     this.logger.log(
       `Find admin tickets started | page=${query.page ?? 1} | limit=${query.limit ?? 10}`,
     );
     try {
-      const result = await this.findAll(query);
+      const result = await this.findAll(query, adminUserId);
       this.logger.log(`Find admin tickets completed | total=${result.total}`);
       return result;
     } catch (error) {
@@ -154,7 +164,10 @@ export class TicketsService {
     }
   }
 
-  private async findAll(query: FindTicketsQueryDto & { raisedById?: string }) {
+  private async findAll(
+    query: FindTicketsQueryDto & { raisedById?: string },
+    requestingUserId: string,
+  ) {
     const {
       search,
       status,
@@ -196,10 +209,24 @@ export class TicketsService {
         }),
         this.prisma.ticket.count({ where }),
       ]);
+      const unreadCounts = await this.chatService.getUnreadCountsForTickets(
+        data.map((t) => t.id),
+        requestingUserId,
+      );
+      const withUnread = data.map((t) => ({
+        ...t,
+        unreadMessageCount: unreadCounts[t.id] ?? 0,
+      }));
       this.logger.log(
         `Find tickets query completed | resultCount=${data.length} | total=${total} | page=${page}`,
       );
-      return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+      return {
+        data: withUnread,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
     } catch (error) {
       this.logger.error(
         `Find tickets query failed | raisedById=${raisedById ?? 'all'} | page=${page}`,
@@ -225,7 +252,7 @@ export class TicketsService {
               changedBy: { select: { id: true, name: true, role: true } },
             },
           },
-          attachments: true
+          attachments: true,
         },
       });
       if (!ticket || ticket.isDeleted) {
@@ -243,10 +270,11 @@ export class TicketsService {
         );
         throw new ForbiddenException('You do not have access to this ticket');
       }
+      const unreadMessageCount = await this.chatService.getUnreadCount(id, requestingUser.userId)
       this.logger.log(
         `Find ticket completed | ticketId=${id} | userId=${requestingUser.userId}`,
       );
-      return ticket;
+      return {...ticket, unreadMessageCount};
     } catch (error) {
       if (
         error instanceof NotFoundException ||

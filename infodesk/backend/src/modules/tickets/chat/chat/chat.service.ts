@@ -83,16 +83,13 @@ export class ChatService {
           'Cannot send messages on a closed ticket',
         );
       }
-
       if (attachmentId) {
         const attachment = await this.prisma.ticketAttachment.findUnique({
           where: { id: attachmentId },
         });
-
         this.logger.log(
           `Checking attachment: requested id=${attachmentId}, found=${!!attachment}, attachment.ticketId=${attachment?.ticketId}, expected ticketId=${ticketId}`,
         );
-
         if (!attachment) {
           this.logger.warn(
             `Rejected message: attachment ${attachmentId} does not exist in the database at all`,
@@ -106,7 +103,6 @@ export class ChatService {
           throw new BadRequestException('Invalid attachment');
         }
       }
-
       const saved = await this.prisma.ticketMessage.create({
         data: {
           ticketId,
@@ -234,5 +230,58 @@ export class ChatService {
     await unlink(file.path).catch((err) =>
       this.logger.warn(`Could not clean up rejected chat file: ${err.message}`),
     );
+  }
+
+  async markAsRead(ticketId: string, userId: string) {
+    try {
+      await this.prisma.ticketMessageRead.upsert({
+        where: { ticketId_userId: { ticketId, userId } },
+        update: { lastReadAt: new Date() },
+        create: { ticketId, userId },
+      });
+      this.logger.log(`Ticket ${ticketId} marked read for user ${userId}`);
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to mark ticket ${ticketId} read for user ${userId}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async getUnreadCount(ticketId: string, userId: string): Promise<number> {
+    try {
+      const readRecord = await this.prisma.ticketMessageRead.findUnique({
+        where: {
+          ticketId_userId: { ticketId, userId },
+        },
+      });
+      return await this.prisma.ticketMessage.count({
+        where: {
+          ticketId,
+          senderId: { not: userId },
+          createdAt: { gt: readRecord?.lastReadAt ?? new Date(0) },
+        },
+      });
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to compute unread count: ${error.message}`,
+        error.stack,
+      );
+      return 0;
+    }
+  }
+
+  async getUnreadCountsForTickets(
+    ticketIds: string[],
+    userId: string,
+  ): Promise<Record<string, number>> {
+    const counts: Record<string, number> = {};
+    await Promise.all(
+      ticketIds.map(async (id) => {
+        counts[id] = await this.getUnreadCount(id, userId);
+      }),
+    );
+    return counts;
   }
 }

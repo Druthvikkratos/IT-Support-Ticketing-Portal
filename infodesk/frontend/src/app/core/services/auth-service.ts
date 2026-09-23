@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { User } from '../models/user.model';
-import { Observable, tap } from 'rxjs';
+import { catchError, finalize, Observable, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SocketService } from './socket-service';
 
@@ -18,9 +18,19 @@ export class AuthService {
   private initializedSignal = signal(false);
 
   readonly currentUser = this.currentUserSignal.asReadonly();
-  readonly isInitialized = this.currentUserSignal.asReadonly();
+  readonly isInitialized = this.initializedSignal.asReadonly();
   readonly isLoggedIn = computed(() => this.currentUserSignal() != null);
   readonly isAdmin = computed(() => this.currentUserSignal()?.role === 'admin');
+
+  bootstrap(): Observable<User | null> {
+  return this.loadCurrentUser().pipe(
+    catchError(() => {
+      this.currentUserSignal.set(null); // not logged in — that's fine, not an error
+      return of(null);
+    }),
+    finalize(() => this.initializedSignal.set(true)),
+  );
+}
 
   login(identifier: string, password: string): Observable<User> {
     return this.http

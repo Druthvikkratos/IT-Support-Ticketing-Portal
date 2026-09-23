@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ChatMessage, ITicketAttachment } from '../models/chat-message.model';
+import { ChatMessage, TicketAttachmentSummary } from '../models/chat-message.model';
 
 @Injectable({
   providedIn: 'root',
@@ -14,13 +14,10 @@ export class ChatService {
     return this.http.get<ChatMessage[]>(`${environment.apiUrl}/tickets/${ticketId}/messages`);
   }
 
-  uploadAttachment(
-    ticketId: string,
-    file: File,
-  ): Observable<ITicketAttachment> {
+  uploadAttachment(ticketId: string, file: File): Observable<TicketAttachmentSummary> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post<ITicketAttachment >(
+    return this.http.post<TicketAttachmentSummary>(
       `${environment.apiUrl}/tickets/${ticketId}/messages/attachment`,
       formData,
     );
@@ -28,5 +25,12 @@ export class ChatService {
 
   attachmentViewUrl(ticketId: string, filePath: string): string {
     return `${environment.apiUrl}/tickets/${ticketId}/messages/attachment/view?path=${encodeURIComponent(filePath)}`;
+  }
+
+  markAsRead(ticketId: string): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>(
+      `${environment.apiUrl}/tickets/${ticketId}/messages/read`,
+      {},
+    );
   }
 }

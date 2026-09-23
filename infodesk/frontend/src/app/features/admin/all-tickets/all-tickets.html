@@ -103,7 +103,7 @@
           </tr>
         } @else {
           @for (ticket of tickets(); track ticket.id) {
-            <tr>
+            <tr role="button" (click)="viewTicket(ticket.id)">
               <td class="col-fit">
                 <span class="code-chip">{{ ticket.ticketNumber }}</span>
               </td>
@@ -129,15 +129,22 @@
                 </span>
               </td>
               <td class="col-fit text-muted">{{ ticket.createdAt | date: 'MMM d, y' }}</td>
-              <td class="col-fit actions-col">
+              <td class="col-fit actions-col" (click)="$event.stopPropagation()">
                 <div class="actions-group">
-                  <a
-                    class="icon-btn icon-btn-edit"
-                    [routerLink]="['/tickets', ticket.id]"
-                    title="View ticket"
-                  >
-                    <i class="ti ti-eye"></i>
-                  </a>
+                  <span class="icon-btn-wrapper">
+                    <a
+                      class="icon-btn icon-btn-edit"
+                      [routerLink]="['/tickets', ticket.id]"
+                      title="View ticket"
+                    >
+                      <i class="ti ti-eye"></i>
+                    </a>
+                    @if (ticket.unreadMessageCount && ticket.unreadMessageCount > 0) {
+                      <span class="unread-badge">{{
+                        ticket.unreadMessageCount > 9 ? '9+' : ticket.unreadMessageCount
+                      }}</span>
+                    }
+                  </span>
                 </div>
               </td>
             </tr>

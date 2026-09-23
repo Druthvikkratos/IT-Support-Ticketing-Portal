@@ -3,20 +3,16 @@ export interface ChatMessage {
   ticketId: string;
   senderId: string;
   message: string | null;
-  attachment: ITicketAttachment;
+  attachmentId: string | null;
+  attachment: TicketAttachmentSummary | null;
   createdAt: string;
   sender: { id: string; name: string; role: string };
 }
 
 
-export interface ITicketAttachment {
+export interface TicketAttachmentSummary {
   id: string;
-  ticketId: string;
-  fieldId: number | null;
   originalName: string;
-  filePath: string;
   fileSize: number;
   detectedMime: string;
-  uploadedById: string;
-  uploadedAt: string;
 }

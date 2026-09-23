@@ -7,7 +7,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { STATUS_CONFIG, Ticket, TicketStatus } from '../../../core/models/ticket.model';
 import { IssueType } from '../../../core/models/issue-type.model';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-all-tickets',
@@ -18,6 +18,7 @@ import { RouterLink } from '@angular/router';
 export class AllTickets {
   private ticketsService = inject(TicketService);
   private issueTypesService = inject(IssueTypesService);
+  private router = inject(Router);
 
   statusConfig = STATUS_CONFIG;
   statusTabs: { value: string; label: string }[] = [
@@ -91,7 +92,7 @@ export class AllTickets {
       .subscribe({
         next: (res) => {
           this.tickets.set(res.data);
-          console.log("logs", this.tickets()[0].rasiedBy.name)
+          console.log('logs', this.tickets()[0].rasiedBy.name);
           this.total.set(res.total);
           this.totalPages.set(res.totalPages);
           this.loading.set(false);
@@ -125,7 +126,12 @@ export class AllTickets {
   statusLabel(status: TicketStatus) {
     return this.statusConfig[status].label;
   }
+
   statusClass(status: TicketStatus) {
     return this.statusConfig[status].class;
+  }
+
+  viewTicket(id: string) {
+    this.router.navigate(['/tickets', id]);
   }
 }

@@ -29,10 +29,15 @@
 
     <div class="d-flex gap-2">
       <button
-        class="btn btn-outline-primary d-flex align-items-center gap-2"
-        (click)="showChat.set(true)"
+        class="btn btn-outline-primary d-flex align-items-center gap-2 position-relative"
+        (click)="openChat()"
       >
         <i class="ti ti-message-circle"></i> Chat
+        @if (t.unreadMessageCount && t.unreadMessageCount > 0) {
+          <span class="unread-badge" style="position: absolute; top: -6px; right: -6px">{{
+            t.unreadMessageCount > 9 ? '9+' : t.unreadMessageCount
+          }}</span>
+        }
       </button>
       @if (canEdit()) {
         <a
@@ -217,11 +222,15 @@
 
   @if (showChat()) {
     <app-ticket-chat
-    [ticketId]="t.id"
-    [ticketClosed]="t.status === 'closed'"
-    [counterpartName]="authService.isAdmin() ? t.rasiedBy.name + (t.rasiedBy.employeeCode ? ' (' + t.rasiedBy.employeeCode + ')' : '') : 'IT Support Team'"
-    [counterpartUserId]="authService.isAdmin() ? t.rasiedBy.id : undefined"
-    (closed)="showChat.set(false)"
-  />
+      [ticketId]="t.id"
+      [ticketClosed]="t.status === 'closed'"
+      [counterpartName]="
+        authService.isAdmin()
+          ? t.rasiedBy.name + (t.rasiedBy.employeeCode ? ' (' + t.rasiedBy.employeeCode + ')' : '')
+          : 'IT Support Team'
+      "
+      [counterpartUserId]="authService.isAdmin() ? t.rasiedBy.id : undefined"
+      (closed)="showChat.set(false)"
+    />
   }
 }

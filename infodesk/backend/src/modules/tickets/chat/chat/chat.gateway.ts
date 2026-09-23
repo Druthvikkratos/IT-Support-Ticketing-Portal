@@ -118,9 +118,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() ticketId: string,
   ) {
+    const user: SocketUser | undefined = client.data.user
     const roomName = `ticket:${ticketId}`;
     client.leave(roomName);
     this.logger.log(`Socket ${client.id} left room ${roomName}`);
+    if(user){
+      client.to(roomName).emit('userStoppedTyping', {userId: user.userId})
+    }
   }
 
   @SubscribeMessage('sendMessage')
@@ -158,27 +162,24 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('typing')
   handleTyping(
     @ConnectedSocket() client: Socket,
-    @MessageBody() ticketId: string,
+    @MessageBody() data: { ticketId: string; name: string }
   ) {
     const user: SocketUser | undefined = client.data.user;
+    this.logger.log(`[TYPING] received from socket ${client.id}, user=${user?.userId}, ticket=${data?.ticketId}, name=${data?.name}`);
     if (!user) return;
 
     // broadcast to everyone else in the room EXCEPT the sender —
     // client.to() (not server.to()) excludes the emitting socket automatically
-    client
-      .to(`ticket:${ticketId}`)
-      .emit('userTyping', { userId: user.userId, name: user.email });
+   client.to(`ticket:${data.ticketId}`).emit('userTyping', { userId: user.userId, name: data.name });
   }
 
   @SubscribeMessage('stopTyping')
   handleStopTyping(
     @ConnectedSocket() client: Socket,
-    @MessageBody() ticketId: string,
+    @MessageBody() data: { ticketId: string }
   ) {
     const user: SocketUser | undefined = client.data.user;
     if (!user) return;
-    client
-      .to(`ticket:${ticketId}`)
-      .emit('userStoppedTyping', { userId: user.userId });
+    client.to(`ticket:${data.ticketId}`).emit('userStoppedTyping', { userId: user.userId });
   }
 }

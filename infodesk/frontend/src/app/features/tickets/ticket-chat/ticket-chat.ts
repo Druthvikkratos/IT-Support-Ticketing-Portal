@@ -31,6 +31,7 @@ export class TicketChat {
   @Output() closed = new EventEmitter<void>();
   @Input() counterpartName = 'Chat';
   @Input() counterpartUserId?: string;
+  @Output() markedRead = new EventEmitter<void>();
 
   @ViewChild('scrollAnchor') scrollAnchor?: ElementRef<HTMLDivElement>;
   @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
@@ -68,6 +69,11 @@ export class TicketChat {
     this.socketService.connect();
     this.socketService.joinRoom(this.ticketId);
 
+    this.chatService.markAsRead(this.ticketId).subscribe({
+      next: () => this.markedRead.emit(),
+      error: (err: any) => console.error('[Chat] failed to mark as read:', err),
+    });
+
     this.messageSub = this.socketService.messages$.subscribe((msg) => {
       if (!msg || msg.ticketId !== this.ticketId) {
         console.warn('[Chat] received invalid or unrelated message payload:', msg);
@@ -92,8 +98,10 @@ export class TicketChat {
   ngOnDestroy() {
     console.log('[Chat] modal closed for ticket', this.ticketId);
     this.socketService.leaveRoom(this.ticketId);
-    this.socketService.emitStopTyping(this.ticketId);
-    if (this.typingTimeout) clearTimeout(this.typingTimeout);
+    if (this.typingTimeout) {
+      clearTimeout(this.typingTimeout);
+      this.socketService.emitStopTyping(this.ticketId);
+    }
     this.clearPreview();
     this.messageSub?.unsubscribe();
     this.errorSub?.unsubscribe();
@@ -137,12 +145,9 @@ export class TicketChat {
   send() {
     const text = this.messageText.trim();
     const file = this.selectedFile();
-
     if (!text && !file) return; // nothing to send
-
     if (this.typingTimeout) clearTimeout(this.typingTimeout);
     this.socketService.emitStopTyping(this.ticketId);
-
     if (file) {
       this.uploadingAttachment.set(true);
       this.chatService.uploadAttachment(this.ticketId, file).subscribe({

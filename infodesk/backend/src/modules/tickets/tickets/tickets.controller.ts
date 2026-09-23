@@ -36,8 +36,8 @@ export class TicketsController {
 
   @Get()
   @Roles('admin')
-  findAll(@Query() query: FindTicketsQueryDto) {
-    return this.ticketService.findAllTicketsForAdmin(query);
+  findAll(@Query() query: FindTicketsQueryDto, @CurrentUser() user) {
+    return this.ticketService.findAllTicketsForAdmin(query, user.userId);
   }
 
   @Get(':id')

@@ -200,4 +200,10 @@ export class TicketDetails {
   openInNewTab(url: string) {
     window.open(url, '_blank');
   }
+
+  openChat() {
+    this.showChat.set(true);
+    const current = this.ticket();
+    if (current) this.ticket.set({ ...current, unreadMessageCount: 0 });
+  }
 }

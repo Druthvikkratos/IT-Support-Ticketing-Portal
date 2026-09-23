@@ -26,11 +26,19 @@
   </div>
 
   <div class="card-header bg-white d-flex gap-2 py-3 border-top-0">
-    <div class="input-group" style="max-width: 320px;">
+    <div class="input-group" style="max-width: 320px">
       <span class="input-group-text bg-white"><i class="ti ti-search"></i></span>
-      <input class="form-control" placeholder="Search ticket number or title..." [formControl]="searchControl" />
+      <input
+        class="form-control"
+        placeholder="Search ticket number or title..."
+        [formControl]="searchControl"
+      />
     </div>
-    <select class="form-select" style="max-width: 160px;" (change)="priorityFilter.set($any($event.target).value)">
+    <select
+      class="form-select"
+      style="max-width: 160px"
+      (change)="priorityFilter.set($any($event.target).value)"
+    >
       <option value="">All Priorities</option>
       <option value="high">High</option>
       <option value="low">Low</option>
@@ -44,39 +52,61 @@
           <th class="col-fit" role="button" (click)="sortBy('ticketNumber')">
             <span class="th-content sortable" [class.sort-active]="sortField() === 'ticketNumber'">
               Ticket #
-              <i class="ti" [class.ti-arrows-sort]="sortField() !== 'ticketNumber'"
-                 [class.ti-sort-ascending]="sortField() === 'ticketNumber' && sortDir() === 'asc'"
-                 [class.ti-sort-descending]="sortField() === 'ticketNumber' && sortDir() === 'desc'"></i>
+              <i
+                class="ti"
+                [class.ti-arrows-sort]="sortField() !== 'ticketNumber'"
+                [class.ti-sort-ascending]="sortField() === 'ticketNumber' && sortDir() === 'asc'"
+                [class.ti-sort-descending]="sortField() === 'ticketNumber' && sortDir() === 'desc'"
+              ></i>
             </span>
           </th>
           <th class="col-flex"><span class="th-content">Title</span></th>
           <th class="col-fit"><span class="th-content">Issue Type</span></th>
-          <th class="col-fit text-center"><span class="th-content justify-content-center">Priority</span></th>
-          <th class="col-fit text-center"><span class="th-content justify-content-center">Status</span></th>
+          <th class="col-fit text-center">
+            <span class="th-content justify-content-center">Priority</span>
+          </th>
+          <th class="col-fit text-center">
+            <span class="th-content justify-content-center">Status</span>
+          </th>
           <th class="col-fit" role="button" (click)="sortBy('createdAt')">
             <span class="th-content sortable" [class.sort-active]="sortField() === 'createdAt'">
               Raised On
-              <i class="ti" [class.ti-arrows-sort]="sortField() !== 'createdAt'"
-                 [class.ti-sort-ascending]="sortField() === 'createdAt' && sortDir() === 'asc'"
-                 [class.ti-sort-descending]="sortField() === 'createdAt' && sortDir() === 'desc'"></i>
+              <i
+                class="ti"
+                [class.ti-arrows-sort]="sortField() !== 'createdAt'"
+                [class.ti-sort-ascending]="sortField() === 'createdAt' && sortDir() === 'asc'"
+                [class.ti-sort-descending]="sortField() === 'createdAt' && sortDir() === 'desc'"
+              ></i>
             </span>
           </th>
-          <th class="col-fit actions-col text-center"><span class="th-content justify-content-center">Actions</span></th>
+          <th class="col-fit actions-col text-center">
+            <span class="th-content justify-content-center">Actions</span>
+          </th>
         </tr>
       </thead>
       <tbody>
         @if (loading()) {
-          <tr><td colspan="7" class="text-center py-5 text-muted">Loading...</td></tr>
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">Loading...</td>
+          </tr>
         } @else if (tickets().length === 0) {
-          <tr><td colspan="7" class="text-center py-5 text-muted">No tickets found.</td></tr>
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">No tickets found.</td>
+          </tr>
         } @else {
           @for (ticket of tickets(); track ticket.id) {
             <tr role="button" (click)="viewTicket(ticket.id)">
-              <td class="col-fit"><span class="code-chip">{{ ticket.ticketNumber }}</span></td>
+              <td class="col-fit">
+                <span class="code-chip">{{ ticket.ticketNumber }}</span>
+              </td>
               <td class="col-flex fw-medium">{{ ticket.title }}</td>
               <td class="col-fit text-muted">{{ ticket.issueType.name }}</td>
               <td class="col-fit text-center">
-                <span class="priority-pill" [class.priority-high]="ticket.priority === 'high'" [class.priority-low]="ticket.priority === 'low'">
+                <span
+                  class="priority-pill"
+                  [class.priority-high]="ticket.priority === 'high'"
+                  [class.priority-low]="ticket.priority === 'low'"
+                >
                   {{ ticket.priority }}
                 </span>
               </td>
@@ -89,9 +119,20 @@
               <td class="col-fit text-muted">{{ ticket.createdAt | date: 'MMM d, y' }}</td>
               <td class="col-fit actions-col" (click)="$event.stopPropagation()">
                 <div class="actions-group">
-                  <a class="icon-btn icon-btn-edit" [routerLink]="['/tickets', ticket.id]" title="View ticket">
-                    <i class="ti ti-eye"></i>
-                  </a>
+                  <span class="icon-btn-wrapper">
+                    <a
+                      class="icon-btn icon-btn-edit"
+                      [routerLink]="['/tickets', ticket.id]"
+                      title="View ticket"
+                    >
+                      <i class="ti ti-eye"></i>
+                    </a>
+                    @if (ticket.unreadMessageCount && ticket.unreadMessageCount > 0) {
+                      <span class="unread-badge">{{
+                        ticket.unreadMessageCount > 9 ? '9+' : ticket.unreadMessageCount
+                      }}</span>
+                    }
+                  </span>
                 </div>
               </td>
             </tr>
@@ -104,8 +145,20 @@
   <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
     <span class="text-muted small">Page {{ page() }} of {{ totalPages() }}</span>
     <div class="btn-group">
-      <button class="btn btn-outline-secondary btn-sm" [disabled]="page() === 1" (click)="goToPage(page() - 1)">Previous</button>
-      <button class="btn btn-outline-secondary btn-sm" [disabled]="page() === totalPages()" (click)="goToPage(page() + 1)">Next</button>
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="page() === 1"
+        (click)="goToPage(page() - 1)"
+      >
+        Previous
+      </button>
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="page() === totalPages()"
+        (click)="goToPage(page() + 1)"
+      >
+        Next
+      </button>
     </div>
   </div>
 </div>

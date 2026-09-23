@@ -16,6 +16,7 @@ import { AttachementsModule } from '../../attachments/attachements/attachements.
     }),
   ],
   providers: [ChatService, ChatGateway],
-  controllers: [ChatController]
+  controllers: [ChatController],
+  exports:[ChatService]
 })
 export class ChatModule {}

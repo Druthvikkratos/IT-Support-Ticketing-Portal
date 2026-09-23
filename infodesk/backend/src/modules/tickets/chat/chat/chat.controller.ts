@@ -1,4 +1,15 @@
-import { Controller, ForbiddenException, Get, Logger, Param, Post, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  ForbiddenException,
+  Get,
+  Logger,
+  Param,
+  Post,
+  Res,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { JwtAuthGaurd } from 'src/modules/auth/guards/jwt-auth.guard';
 import { ChatService } from './chat.service';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -13,7 +24,10 @@ import { AttachementsService } from '../../attachments/attachements/attachements
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
 
-  constructor(private chatService: ChatService, private attachementsService: AttachementsService) {}
+  constructor(
+    private chatService: ChatService,
+    private attachementsService: AttachementsService,
+  ) {}
 
   @Get()
   async findHistory(@Param('ticketId') ticketId: string, @CurrentUser() user) {
@@ -35,7 +49,7 @@ export class ChatController {
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser() user,
   ) {
-    return this.attachementsService.uploadChatAttachment(ticketId, user, file)
+    return this.attachementsService.uploadChatAttachment(ticketId, user, file);
   }
 
   @Get('attachment/view')
@@ -45,13 +59,24 @@ export class ChatController {
     @Res() res: express.Response,
   ) {
     const filePath = res.req.query['path'] as string;
-    if (!filePath || !filePath.startsWith(`assets/ticket-attachments/${ticketId}/chat/`)) {
-      this.logger.warn(`SECURITY: rejected attachment view request with suspicious path: ${filePath}`);
+    if (
+      !filePath ||
+      !filePath.startsWith(`assets/ticket-attachments/${ticketId}/chat/`)
+    ) {
+      this.logger.warn(
+        `SECURITY: rejected attachment view request with suspicious path: ${filePath}`,
+      );
       throw new ForbiddenException('Invalid file path');
     }
 
     await this.chatService.verifyAccess(ticketId, user);
     res.sendFile(resolve(filePath));
   }
-  
+
+  @Post('read')
+  async markAsRead(@Param('ticketId') ticketId: string, @CurrentUser() user) {
+    await this.chatService.verifyAccess(ticketId, user);
+    await this.chatService.markAsRead(ticketId, user.userId);
+    return { success: true };
+  }
 }

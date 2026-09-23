@@ -17,7 +17,7 @@ export class SocketService {
   private messageSubject = new Subject<ChatMessage>();
   messages$ = this.messageSubject.asObservable();
 
-  private errorSubject = new Subject<string>(); 
+  private errorSubject = new Subject<string>();
   error$ = this.errorSubject.asObservable();
 
   connect() {
@@ -61,9 +61,11 @@ export class SocketService {
       });
     });
     this.socket.on('userTyping', ({ userId, name }: { userId: string; name: string }) => {
+      console.log('[Socket] userTyping received:', userId, name);
       this.typingUsers.update((current) => new Map(current).set(userId, name));
     });
     this.socket.on('userStoppedTyping', ({ userId }: { userId: string }) => {
+      console.log('[Socket] userStoppedTyping received:', userId);
       this.typingUsers.update((current) => {
         const updated = new Map(current);
         updated.delete(userId);
@@ -73,11 +75,13 @@ export class SocketService {
   }
 
   joinRoom(ticketId: string) {
+    this.typingUsers.set(new Map()); 
     this.socket?.emit('joinTicketRoom', ticketId);
   }
 
   leaveRoom(ticketId: string) {
     this.socket?.emit('leaveTicketRoom', ticketId);
+    this.typingUsers.set(new Map());
   }
 
   sendMessage(ticketId: string, message?: string, attachmentId?: string) {
@@ -89,6 +93,16 @@ export class SocketService {
     this.socket.emit('sendMessage', { ticketId, message, attachmentId });
   }
 
+  emitTyping(ticketId: string, name: string) {
+    console.log('[Socket] emitting typing', ticketId, name);
+    this.socket?.emit('typing', { ticketId, name });
+  }
+
+  emitStopTyping(ticketId: string) {
+    console.log('[Socket] emitting stopTyping', ticketId);
+    this.socket?.emit('stopTyping', { ticketId });
+  }
+
   isOnline(userId: string): boolean {
     return this.onlineUsers().has(userId);
   }
@@ -97,13 +111,5 @@ export class SocketService {
     this.socket?.disconnect();
     this.socket = null;
     this.connected.set(false);
-  }
-
-  emitTyping(ticketId: string, name: string) {
-    this.socket?.emit('typing', { ticketId, name });
-  }
-
-  emitStopTyping(ticketId: string) {
-    this.socket?.emit('stopTyping', { ticketId });
   }
 }

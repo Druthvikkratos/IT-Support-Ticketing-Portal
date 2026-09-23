@@ -21,6 +21,7 @@ export interface Ticket {
   closedAt: string | null;
   statusHistory?: TicketStatusHistoryEntry[];
   attachments? : TicketAttachment[]
+  unreadMessageCount?: number;
 }
 
 export interface CreateTicketPayload {
