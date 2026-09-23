@@ -71,7 +71,7 @@
           <tr><td colspan="7" class="text-center py-5 text-muted">No tickets found.</td></tr>
         } @else {
           @for (ticket of tickets(); track ticket.id) {
-            <tr>
+            <tr role="button" (click)="viewTicket(ticket.id)">
               <td class="col-fit"><span class="code-chip">{{ ticket.ticketNumber }}</span></td>
               <td class="col-flex fw-medium">{{ ticket.title }}</td>
               <td class="col-fit text-muted">{{ ticket.issueType.name }}</td>
@@ -87,7 +87,7 @@
                 </span>
               </td>
               <td class="col-fit text-muted">{{ ticket.createdAt | date: 'MMM d, y' }}</td>
-              <td class="col-fit actions-col">
+              <td class="col-fit actions-col" (click)="$event.stopPropagation()">
                 <div class="actions-group">
                   <a class="icon-btn icon-btn-edit" [routerLink]="['/tickets', ticket.id]" title="View ticket">
                     <i class="ti ti-eye"></i>

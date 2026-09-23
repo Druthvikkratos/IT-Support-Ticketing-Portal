@@ -6,6 +6,7 @@ import { PrismaModule } from 'src/modules/prisma/prisma.module';
 @Module({
   imports: [PrismaModule],
   providers: [AttachementsService],
-  controllers: [AttachementsController]
+  controllers: [AttachementsController],
+  exports: [AttachementsService],
 })
 export class AttachementsModule {}

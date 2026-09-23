@@ -1,0 +1,135 @@
+<div class="modal-backdrop-custom" (click)="close()"></div>
+<div class="modal-panel chat-modal-panel">
+  <div class="modal-content-custom chat-modal-content">
+    <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+      <div>
+        <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
+          @if (counterpartUserId) {
+            <span
+              class="presence-dot"
+              [class.presence-online]="socketService.isOnline(counterpartUserId)"
+            ></span>
+          }
+          {{ counterpartName }}
+        </h5>
+        <div class="small text-muted">Ticket chat</div>
+      </div>
+      <button class="btn-close" (click)="close()"></button>
+    </div>
+
+    <div class="chat-body">
+      @if (loading()) {
+        <div class="text-center py-5 text-muted">Loading messages...</div>
+      } @else if (messages().length === 0) {
+        <div class="text-center py-5 text-muted">
+          <i class="ti ti-message-2 fs-1 d-block mb-2"></i>
+          No messages yet. Start the conversation below.
+        </div>
+      } @else {
+        @for (msg of messages(); track msg.id) {
+          <div class="chat-row" [class.chat-row-mine]="isMine(msg)">
+            <div class="chat-bubble" [class.chat-bubble-mine]="isMine(msg)">
+              <div class="chat-sender">
+                <span
+                  class="presence-dot"
+                  [class.presence-online]="socketService.isOnline(msg.senderId)"
+                ></span>
+                {{ msg.sender.name }}
+                <span class="chat-role-tag">{{ msg.sender.role }}</span>
+              </div>
+
+              @if (msg.message) {
+                <div class="chat-text">{{ msg.message }}</div>
+              }
+
+              @if (msg.attachment) {
+                @if (isImage(msg)) {
+                  <a [href]="viewUrl(msg)" target="_blank">
+                    <img
+                      [src]="viewUrl(msg)"
+                      class="chat-image-preview"
+                      [alt]="msg.attachment.originalName"
+                    />
+                  </a>
+                } @else {
+                  <a [href]="downloadUrl(msg)" target="_blank" class="chat-file-chip">
+                    <i class="ti ti-file"></i>
+                    {{ msg.attachment.originalName }}
+                  </a>
+                }
+              }
+              <div class="chat-time">{{ msg.createdAt | date: 'MMM d, h:mm a' }}</div>
+            </div>
+          </div>
+        }
+      }
+      <div #scrollAnchor></div>
+    </div>
+
+    @if (typingIndicatorText(); as text) {
+      <div class="typing-indicator">{{ text }}</div>
+    }
+    <div class="chat-input-area">
+      @if (ticketClosed) {
+        <div class="text-center text-muted small py-2">
+          This ticket is closed. No new messages can be sent.
+        </div>
+      } @else {
+        @if (selectedFile(); as file) {
+          <div
+            class="attachment-preview-strip d-flex align-items-center gap-2 p-2 mb-2 border rounded"
+          >
+            @if (previewUrl(); as url) {
+              <img [src]="url" class="attachment-preview-thumb" [alt]="file.name" />
+            } @else {
+              <i class="ti ti-file fs-3"></i>
+            }
+            <span class="small text-truncate flex-grow-1">{{ file.name }}</span>
+            <button
+              class="icon-btn icon-btn-delete"
+              title="Remove attachment"
+              [disabled]="uploadingAttachment()"
+              (click)="removeAttachment()"
+            >
+              <i class="ti ti-x"></i>
+            </button>
+          </div>
+        }
+
+        <div class="d-flex gap-2 align-items-center">
+          <input
+            #fileInput
+            type="file"
+            class="d-none"
+            (change)="onAttachmentSelected($event)"
+            accept="image/*,.pdf,.xlsx,.xls,.doc,.docx"
+          />
+          <button
+            class="icon-btn icon-btn-edit"
+            title="Attach a file"
+            [disabled]="uploadingAttachment()"
+            (click)="fileInput.click()"
+          >
+            <i class="ti ti-paperclip"></i>
+          </button>
+
+          <input
+            class="form-control"
+            [placeholder]="selectedFile() ? 'Add a caption (optional)...' : 'Type a message...'"
+            [(ngModel)]="messageText"
+            (input)="onInputChange()"
+            (keydown.enter)="send()"
+          />
+
+          <button class="btn btn-primary" [disabled]="uploadingAttachment()" (click)="send()">
+            @if (uploadingAttachment()) {
+              <span class="spinner-border spinner-border-sm"></span>
+            } @else {
+              <i class="ti ti-send"></i>
+            }
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</div>

@@ -8,10 +8,11 @@ import { FormField } from '../../../core/models/form-field.model';
 import Swal from 'sweetalert2';
 import { CommonModule } from '@angular/common';
 import { AttachementService } from '../../../core/services/attachement-service';
+import { TicketChat } from '../ticket-chat/ticket-chat';
 
 @Component({
   selector: 'app-ticket-details',
-  imports: [RouterLink, CommonModule],
+  imports: [RouterLink, CommonModule, TicketChat],
   templateUrl: './ticket-details.html',
   styleUrl: './ticket-details.scss',
 })
@@ -29,6 +30,7 @@ export class TicketDetails {
   customFields = signal<FormField[]>([]);
   loading = signal(true);
   updating = signal(false);
+  showChat = signal(false);
 
   availableStatuses = computed(() => {
     const current = this.ticket()?.status;

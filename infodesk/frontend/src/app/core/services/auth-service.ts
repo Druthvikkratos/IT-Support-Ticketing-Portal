@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { User } from '../models/user.model';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SocketService } from './socket-service';
 
 @Injectable({
   providedIn: 'root',
@@ -11,6 +12,7 @@ import { environment } from '../../../environments/environment';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private socketService = inject(SocketService)
 
   private currentUserSignal = signal<User | null>(null);
   private initializedSignal = signal(false);
@@ -34,6 +36,7 @@ export class AuthService {
     this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true }).subscribe({
       complete: () => {
         this.currentUserSignal.set(null);
+        this.socketService.disconnect();
         this.router.navigate(['/login']);
       },
     });

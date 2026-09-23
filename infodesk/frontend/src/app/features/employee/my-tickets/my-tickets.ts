@@ -1,6 +1,6 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TicketService } from '../../../core/services/ticket-service';
 import { STATUS_CONFIG, Ticket, TicketStatus } from '../../../core/models/ticket.model';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -14,8 +14,8 @@ import { CommonModule } from '@angular/common';
   styleUrl: './my-tickets.scss',
 })
 export class MyTickets {
-  
   private ticketService = inject(TicketService);
+  private router = inject(Router);
 
   statusConfig = STATUS_CONFIG;
   statusTabs: { value: string; label: string }[] = [
@@ -118,5 +118,9 @@ export class MyTickets {
   }
   statusClass(status: TicketStatus) {
     return this.statusConfig[status].class;
+  }
+
+  viewTicket(id: string) {
+    this.router.navigate(['/tickets', id]);
   }
 }

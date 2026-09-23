@@ -28,6 +28,12 @@
     </div>
 
     <div class="d-flex gap-2">
+      <button
+        class="btn btn-outline-primary d-flex align-items-center gap-2"
+        (click)="showChat.set(true)"
+      >
+        <i class="ti ti-message-circle"></i> Chat
+      </button>
       @if (canEdit()) {
         <a
           [routerLink]="['/tickets', t.id, 'edit']"
@@ -208,4 +214,14 @@
       </div>
     </div>
   </div>
+
+  @if (showChat()) {
+    <app-ticket-chat
+    [ticketId]="t.id"
+    [ticketClosed]="t.status === 'closed'"
+    [counterpartName]="authService.isAdmin() ? t.rasiedBy.name + (t.rasiedBy.employeeCode ? ' (' + t.rasiedBy.employeeCode + ')' : '') : 'IT Support Team'"
+    [counterpartUserId]="authService.isAdmin() ? t.rasiedBy.id : undefined"
+    (closed)="showChat.set(false)"
+  />
+  }
 }

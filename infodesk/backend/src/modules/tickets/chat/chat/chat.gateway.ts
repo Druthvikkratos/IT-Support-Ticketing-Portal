@@ -16,10 +16,11 @@ import { SendMessageDto } from '../dto/send-message.dto';
 
 @WebSocketGateway({
   namespace: '/chat',
-  cors: { origin: process.env.FRONTEND_URL?.split(',') ?? [], credentials: true },
+  cors: { origin: true, credentials: true },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ChatGateway.name);
+  private onlineUsers = new Map<string, number>();
 
   @WebSocketServer()
   server: Server;
@@ -44,6 +45,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(
         `Socket connected: ${client.id} (user ${user.userId}, role ${user.role})`,
       );
+      client.emit('presenceSnapshot', Array.from(this.onlineUsers.keys()));
+      const currentCount = this.onlineUsers.get(user.userId) ?? 0;
+      this.onlineUsers.set(user.userId, currentCount + 1);
+      if (currentCount === 0) {
+        // this user just came online (first tab/connection) — tell everyone
+        this.server.emit('presenceChanged', {
+          userId: user.userId,
+          online: true,
+        });
+        this.logger.log(`User ${user.userId} is now ONLINE`);
+      }
     } catch (error: any) {
       this.logger.error(
         `Unexpected error during connection handshake: ${error.message}`,
@@ -55,9 +67,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     const user: SocketUser | undefined = client.data.user;
+    if (!user) return;
     this.logger.log(
       `Socket disconnected: ${client.id}${user ? ` (user ${user.userId})` : ''}`,
     );
+    const currentCount = this.onlineUsers.get(user.userId) ?? 0;
+    const newCount = Math.max(0, currentCount - 1);
+    if (newCount === 0) {
+      this.onlineUsers.delete(user.userId);
+      this.server.emit('presenceChanged', {
+        userId: user.userId,
+        online: false,
+      });
+      this.logger.log(`User ${user.userId} is now OFFLINE`);
+    } else {
+      this.onlineUsers.set(user.userId, newCount);
+    }
   }
 
   @SubscribeMessage('joinTicketRoom')
@@ -99,26 +124,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('sendMessage')
-  async handleMessage(
+  async handleSendMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: SendMessageDto,
   ) {
+    const user: SocketUser | undefined = client.data.user
+    if(!user){
+      client.emit('chatError', {message: 'Not authenticated'})
+      return 
+    }
+    let saved
     try {
-      const user: SocketUser | undefined = client.data.user;
-      if (!user) {
-        client.emit('chatError', { message: 'Not authenticated' });
-        return;
-      }
       await this.chatService.verifyAccess(dto.ticketId, user);
-
-      const saved = await this.chatService.saveMessage(
+      saved = await this.chatService.saveMessage(
         dto.ticketId,
         user.userId,
         dto.message,
+        dto.attachmentId,
       );
-      const roomName = `ticket:${dto.ticketId}`;
-      this.server.to(roomName).emit('newMessage', saved);
-      this.logger.log(`Message broadcast to room ${roomName}`);
+      this.logger.log(`Message broadcast to room ticket:${dto.ticketId}`);
     } catch (error: any) {
       this.logger.warn(
         `Send message failed for socket ${client.id}: ${error.message}`,
@@ -127,5 +151,34 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         message: error.message || 'Could not send message',
       });
     }
+    this.server.to(`ticket:${dto.ticketId}`).emit('newMessage', saved)
+    this.logger.log(`Message broadcast to room ticket:${dto.ticketId}`);
+  }
+
+  @SubscribeMessage('typing')
+  handleTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() ticketId: string,
+  ) {
+    const user: SocketUser | undefined = client.data.user;
+    if (!user) return;
+
+    // broadcast to everyone else in the room EXCEPT the sender —
+    // client.to() (not server.to()) excludes the emitting socket automatically
+    client
+      .to(`ticket:${ticketId}`)
+      .emit('userTyping', { userId: user.userId, name: user.email });
+  }
+
+  @SubscribeMessage('stopTyping')
+  handleStopTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() ticketId: string,
+  ) {
+    const user: SocketUser | undefined = client.data.user;
+    if (!user) return;
+    client
+      .to(`ticket:${ticketId}`)
+      .emit('userStoppedTyping', { userId: user.userId });
   }
 }

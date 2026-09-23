@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString, MaxLength, ValidateIf } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
 
 export class SendMessageDto {
   @IsNotEmpty()
@@ -10,4 +16,8 @@ export class SendMessageDto {
   @IsOptional()
   @MaxLength(2000)
   message?: string;
+
+  @IsOptional()
+  @IsString()
+  attachmentId?: string;
 }

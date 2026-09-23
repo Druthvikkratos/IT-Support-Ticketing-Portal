@@ -6,6 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { fromFile, mimeTypes } from 'file-type';
 import { unlink } from 'fs/promises';
 import {
@@ -113,7 +114,7 @@ export class AttachementsService {
               1,
             )}MB, which exceeds the ${fileConfig.maxSizeMB}MB limit for this field`,
           );
-        } 
+        }
         // Real file type detection
         const detected = await fromFile(file.path);
         if (!detected) {
@@ -271,6 +272,80 @@ export class AttachementsService {
     }
   }
 
+  async uploadChatAttachment(
+    ticketId: string,
+    user: { userId: string; role: Role },
+    file: Express.Multer.File,
+  ) {
+    try {
+      const ticket = await this.prisma.ticket.findUnique({
+        where: { id: ticketId },
+      });
+      if (!ticket || ticket.isDeleted) {
+        await this.cleanupSingle(file);
+        this.logger.warn(
+          `Chat attachement rejected:  ticket ${ticket} not found`,
+        );
+        throw new NotFoundException('Ticket not found');
+      }
+      if (user.role === Role.employee && ticket.raisedById !== user.userId) {
+        await this.cleanupSingle(file);
+        this.logger.warn(
+          `SECURITY: user ${user.userId} tried to upload a chat file to ticket ${ticket} they dont own`,
+        );
+        throw new ForbiddenException('You do not have access to this ticket');
+      }
+      if (ticket.status === 'closed') {
+        await this.cleanupSingle(file);
+        throw new BadRequestException('Cannot attach files to a closed ticket');
+      }
+      const allowedMimeTypes: string[] = [
+        ...FILE_CATEGORIES.image.mimeTypes,
+        ...FILE_CATEGORIES.pdf.mimeTypes,
+        ...FILE_CATEGORIES.excel.mimeTypes,
+        ...FILE_CATEGORIES.document.mimeTypes,
+      ];
+      const detected = await fromFile(file.path);
+      if (!detected || !allowedMimeTypes.includes(detected.mime)) {
+        await this.cleanupSingle(file);
+        this.logger.warn(
+          `SECURITY: chat file "${file.originalname}" rejected — sniffed as ${detected?.mime ?? 'unknown'}`,
+        );
+        throw new BadRequestException(
+          'This file type is not supported in chat. Allowed: images, PDF, Excel, Word documents.',
+        );
+      }
+
+      const attachment = await this.prisma.ticketAttachment.create({
+        data: {
+          ticketId,
+          fieldId: null,
+          originalName: file.originalname,
+          filePath: file.path,
+          fileSize: file.size,
+          detectedMime: detected.mime,
+          uploadedById: user.userId,
+        },
+      });
+      this.logger.log(
+        `Chat attachment saved: id=${attachment.id} ticket=${ticketId}`,
+      );
+      return attachment;
+    } catch (error: any) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException
+      )
+        throw error;
+      this.logger.error(
+        `Unexpected error uploading chat attachment: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
   private async cleanUpFiles(files: Express.Multer.File[]) {
     try {
       this.logger.log(`Starting file cleanup | fileCount=${files.length}`);
@@ -297,5 +372,11 @@ export class AttachementsService {
         error instanceof Error ? error.stack : String(error),
       );
     }
+  }
+
+  private async cleanupSingle(file: Express.Multer.File) {
+    await unlink(file.path).catch((err) =>
+      this.logger.warn(`Could not clean up rejected file: ${err.message}`),
+    );
   }
 }
