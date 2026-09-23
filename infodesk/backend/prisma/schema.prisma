@@ -45,6 +45,14 @@ enum FieldType {
   file
 }
 
+enum NotificationType {
+  ticket_raised
+  status_changed
+  new_message
+  ticket_closed
+  bulk_upload_result
+}
+
 model User {
   id           String   @id @default(uuid())
   role         Role
@@ -70,6 +78,7 @@ model User {
   ticketsRaised      Ticket[]            @relation("RaisedBy")
   ticketMessages     TicketMessage[]
   ticketMessageReads TicketMessageRead[]
+  notifications      Notification[]
 
   @@map("users")
 }
@@ -188,4 +197,17 @@ model TicketMessageRead {
 
   @@unique([ticketId, userId])
   @@map("ticket_message_reads")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType @map("notification_type")
+  message   String
+  ticketId  String?          @map("ticket_id")
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  @@map("notifications")
 }

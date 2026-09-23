@@ -13,6 +13,7 @@ import { Prisma, Role, TicketStatus } from '@prisma/client';
 import { generateNextTicketNumber } from 'src/common/utils/ticket-number.util';
 import { UpdateTicketStatusDto } from '../dto/update-ticket-status.dto';
 import { ChatService } from '../chat/chat/chat.service';
+import { NotificationService } from 'src/modules/notifications/notifications/notification.service';
 
 @Injectable()
 export class TicketsService {
@@ -20,6 +21,7 @@ export class TicketsService {
   constructor(
     private prisma: PrismaService,
     private chatService: ChatService,
+    private notificationService: NotificationService,
   ) {}
 
   async createTicket(dto: CreateTicketDto, raisedById: string) {
@@ -59,6 +61,17 @@ export class TicketsService {
           },
         });
         await this.logStatusChange(tx, ticket.id, null, 'raised', raisedById);
+        this.notificationService
+          .notifyAllAdmins(
+            'ticket_raised',
+            `${ticket.rasiedBy.name} raised a new ticket: ${ticket.ticketNumber} — ${ticket.title}`,
+            ticket.id,
+          )
+          .catch((err) =>
+            this.logger.error(
+              `Notification dispatch failed for new ticket ${ticket.id}: ${err.message}`,
+            ),
+          );
         this.logger.log(
           `Create ticket completed | ticketId=${ticket.id} | ticketNumber=${ticket.ticketNumber} | raisedById=${raisedById}`,
         );
@@ -270,11 +283,14 @@ export class TicketsService {
         );
         throw new ForbiddenException('You do not have access to this ticket');
       }
-      const unreadMessageCount = await this.chatService.getUnreadCount(id, requestingUser.userId)
+      const unreadMessageCount = await this.chatService.getUnreadCount(
+        id,
+        requestingUser.userId,
+      );
       this.logger.log(
         `Find ticket completed | ticketId=${id} | userId=${requestingUser.userId}`,
       );
-      return {...ticket, unreadMessageCount};
+      return { ...ticket, unreadMessageCount };
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -398,6 +414,18 @@ export class TicketsService {
         this.logger.log(
           `Update ticket status completed | ticketId=${id} | oldStatus=${ticket.status} | newStatus=${dto.status}`,
         );
+        this.notificationService
+          .create(
+            ticket.raisedById,
+            'status_changed',
+            `Your ticket ${ticket.ticketNumber} status changed to ${dto.status}`,
+            id,
+          )
+          .catch((err) =>
+            this.logger.error(
+              `Notification dispatch failed for status change on ${id}: ${err.message}`,
+            ),
+          );
 
         return updatedTicket;
       });
@@ -450,6 +478,17 @@ export class TicketsService {
         this.logger.log(
           `Close ticket by employee completed | ticketId=${id} | userId=${userId}`,
         );
+        this.notificationService
+          .notifyAllAdmins(
+            'ticket_closed',
+            `Ticket ${ticket.ticketNumber} was closed by the employee`,
+            id,
+          )
+          .catch((err) =>
+            this.logger.error(
+              `Notification dispatch failed for ticket close on ${id}: ${err.message}`,
+            ),
+          );
         return closedTicket;
       });
     } catch (error) {

@@ -13,6 +13,8 @@ import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 import { getUserFromSocket, SocketUser } from '../utils/socket-auth.util';
 import { SendMessageDto } from '../dto/send-message.dto';
+import { NotificationService } from 'src/modules/notifications/notifications/notification.service';
+import { PrismaService } from 'src/modules/prisma/prisma/prisma.service';
 
 @WebSocketGateway({
   namespace: '/chat',
@@ -28,6 +30,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private chatService: ChatService,
     private jwtService: JwtService,
+    private notificationService: NotificationService,
+    private prisma: PrismaService,
   ) {}
 
   handleConnection(client: Socket) {
@@ -118,12 +122,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() ticketId: string,
   ) {
-    const user: SocketUser | undefined = client.data.user
+    const user: SocketUser | undefined = client.data.user;
     const roomName = `ticket:${ticketId}`;
     client.leave(roomName);
     this.logger.log(`Socket ${client.id} left room ${roomName}`);
-    if(user){
-      client.to(roomName).emit('userStoppedTyping', {userId: user.userId})
+    if (user) {
+      client.to(roomName).emit('userStoppedTyping', { userId: user.userId });
     }
   }
 
@@ -132,12 +136,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: SendMessageDto,
   ) {
-    const user: SocketUser | undefined = client.data.user
-    if(!user){
-      client.emit('chatError', {message: 'Not authenticated'})
-      return 
+    const user: SocketUser | undefined = client.data.user;
+    if (!user) {
+      client.emit('chatError', { message: 'Not authenticated' });
+      return;
     }
-    let saved
+    let saved;
     try {
       await this.chatService.verifyAccess(dto.ticketId, user);
       saved = await this.chatService.saveMessage(
@@ -155,31 +159,67 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         message: error.message || 'Could not send message',
       });
     }
-    this.server.to(`ticket:${dto.ticketId}`).emit('newMessage', saved)
+    this.server.to(`ticket:${dto.ticketId}`).emit('newMessage', saved);
     this.logger.log(`Message broadcast to room ticket:${dto.ticketId}`);
+    this.dispatchMessageNotification(dto.ticketId, user).catch((err) =>
+      this.logger.error(
+        `Notification dispatch failed for message on ticket ${dto.ticketId}: ${err.message}`,
+      ),
+    );
   }
 
   @SubscribeMessage('typing')
   handleTyping(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { ticketId: string; name: string }
+    @MessageBody() data: { ticketId: string; name: string },
   ) {
     const user: SocketUser | undefined = client.data.user;
-    this.logger.log(`[TYPING] received from socket ${client.id}, user=${user?.userId}, ticket=${data?.ticketId}, name=${data?.name}`);
+    this.logger.log(
+      `[TYPING] received from socket ${client.id}, user=${user?.userId}, ticket=${data?.ticketId}, name=${data?.name}`,
+    );
     if (!user) return;
 
     // broadcast to everyone else in the room EXCEPT the sender —
     // client.to() (not server.to()) excludes the emitting socket automatically
-   client.to(`ticket:${data.ticketId}`).emit('userTyping', { userId: user.userId, name: data.name });
+    client
+      .to(`ticket:${data.ticketId}`)
+      .emit('userTyping', { userId: user.userId, name: data.name });
   }
 
   @SubscribeMessage('stopTyping')
   handleStopTyping(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { ticketId: string }
+    @MessageBody() data: { ticketId: string },
   ) {
     const user: SocketUser | undefined = client.data.user;
     if (!user) return;
-    client.to(`ticket:${data.ticketId}`).emit('userStoppedTyping', { userId: user.userId });
+    client
+      .to(`ticket:${data.ticketId}`)
+      .emit('userStoppedTyping', { userId: user.userId });
+  }
+
+  private async dispatchMessageNotification(
+    ticketId: string,
+    sender: SocketUser,
+  ) {
+    const ticket = await this.prisma.ticket.findUnique({
+      where: { id: ticketId },
+    });
+    if (!ticket) return;
+  
+    if (sender.role === 'employee') {
+      await this.notificationService.notifyAllAdmins(
+        'new_message',
+        `New message on ticket ${ticket.ticketNumber}`,
+        ticketId,
+      );
+    } else {
+      await this.notificationService.create(
+        ticket.raisedById,
+        'new_message',
+        `IT support replied on your ticket ${ticket.ticketNumber}`,
+        ticketId,
+      );
+    }
   }
 }
