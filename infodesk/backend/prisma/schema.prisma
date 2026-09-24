@@ -75,10 +75,12 @@ model User {
   deletedBy    User?     @relation("UserDeletedBy", fields: [deletedById], references: [id])
   deletedUsers User[]    @relation("UserDeletedBy")
 
-  ticketsRaised      Ticket[]            @relation("RaisedBy")
+  ticketsRaised      Ticket[]                  @relation("RaisedBy")
   ticketMessages     TicketMessage[]
   ticketMessageReads TicketMessageRead[]
   notifications      Notification[]
+  assignmentsFrom    TicketAssignmentHistory[] @relation("AssignmentFrom")
+  assignmentsTo      TicketAssignmentHistory[] @relation("AssignmentTo")
 
   @@map("users")
 }
@@ -126,12 +128,13 @@ model Ticket {
   statusHistory TicketStatusHistory[]
   attachments   TicketAttachment[]
 
-  isDeleted          Boolean             @default(false) @map("is_deleted")
-  createdAt          DateTime            @default(now()) @map("created_at")
-  updatedAt          DateTime            @updatedAt @map("updated_at")
-  closedAt           DateTime?           @map("closed_at")
+  isDeleted          Boolean                   @default(false) @map("is_deleted")
+  createdAt          DateTime                  @default(now()) @map("created_at")
+  updatedAt          DateTime                  @updatedAt @map("updated_at")
+  closedAt           DateTime?                 @map("closed_at")
   ticketMessages     TicketMessage[]
   ticketMessageReads TicketMessageRead[]
+  assignmentHistory  TicketAssignmentHistory[]
 
   @@map("tickets")
 }
@@ -210,4 +213,17 @@ model Notification {
   createdAt DateTime         @default(now()) @map("created_at")
 
   @@map("notifications")
+}
+
+model TicketAssignmentHistory {
+  id          String   @id @default(uuid())
+  ticketId    String   @map("ticket_id")
+  ticket      Ticket   @relation(fields: [ticketId], references: [id])
+  fromAdminId String?
+  fromAdmin   User?    @relation("AssignmentFrom", fields: [fromAdminId], references: [id])
+  toAdminId   String
+  toAdmin     User     @relation("AssignmentTo", fields: [toAdminId], references: [id])
+  changedAt   DateTime @default(now()) @map("changed_at")
+
+  @@map("ticket_assignment_history")
 }
