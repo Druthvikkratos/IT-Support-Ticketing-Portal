@@ -1,0 +1,74 @@
+<div class="mb-4">
+  <h4 class="fw-bold mb-0">Reports</h4>
+  <p class="text-muted small mb-0">Export ticket data as an Excel report for any date range</p>
+</div>
+
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <label class="form-label small fw-medium text-muted">QUICK RANGES</label>
+        <div class="d-flex flex-wrap gap-2 mb-4">
+          <button class="btn btn-sm btn-outline-secondary" (click)="applyPreset('today')">
+            Today
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" (click)="applyPreset('7days')">
+            Last 7 Days
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" (click)="applyPreset('30days')">
+            Last 30 Days
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" (click)="applyPreset('thisMonth')">
+            This Month
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" (click)="applyPreset('all')">
+            All Time
+          </button>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label small fw-medium">From Date</label>
+            <input type="date" class="form-control" [(ngModel)]="dateFrom" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-medium">To Date</label>
+            <input type="date" class="form-control" [(ngModel)]="dateTo" />
+          </div>
+        </div>
+
+        <div class="alert alert-light border small text-muted mb-4">
+          <i class="ti ti-info-circle me-1"></i>
+          Leave both dates empty to export the complete ticket history. The report includes ticket
+          number, title, who raised it, issue type, priority, status, raised/cleared timestamps, and
+          resolution time.
+        </div>
+
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2"
+          [disabled]="generating()"
+          (click)="generate()"
+        >
+          @if (generating()) {
+            <span class="spinner-border spinner-border-sm"></span> Generating...
+          } @else {
+            <i class="ti ti-file-spreadsheet"></i> Generate & Download Report
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm report-preview-card">
+      <div class="card-body p-4 text-center">
+        <i class="ti ti-file-spreadsheet report-preview-icon"></i>
+        <h6 class="fw-semibold mt-3 mb-1">Excel Report</h6>
+        <p class="text-muted small mb-0">
+          Downloads as a formatted .xlsx file — opens directly in Excel, Google Sheets, or
+          LibreOffice Calc.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

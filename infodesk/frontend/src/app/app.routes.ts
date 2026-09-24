@@ -72,6 +72,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/tickets/ticket-details/ticket-details').then((m) => m.TicketDetails),
       },
+      {
+        path: 'reports',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/admin/reports/reports').then((m) => m.Reports),
+      },
     ],
   },
   {

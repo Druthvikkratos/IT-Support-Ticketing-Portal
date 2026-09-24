@@ -5,7 +5,7 @@ import { JwtAuthGaurd } from 'src/modules/auth/guards/jwt-auth.guard';
 import { ReportService } from './report.service';
 import express from 'express';
 
-@Controller('report')
+@Controller('reports')
 @UseGuards(JwtAuthGaurd, RolesGaurd)
 @Roles('admin')
 export class ReportController {
