@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { AuthService } from '../services/auth-service';
 import { catchError, finalize, firstValueFrom, of, tap } from 'rxjs';
 import { SessionTimerService } from '../services/session-timer-service';
+import { PollingService } from '../services/polling-service';
 
 export function initializeAuth() {
   const authService = inject(AuthService)

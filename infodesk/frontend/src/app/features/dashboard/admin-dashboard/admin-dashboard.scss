@@ -1,0 +1,73 @@
+.status-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.1rem;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  transition: transform .15s ease;
+  &:hover { transform: translateY(-2px); }
+}
+.status-card-icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: .6rem;
+  i { font-size: 1.05rem; }
+}
+.status-card-value { font-size: 1.6rem; font-weight: 700; color: #0f172a; line-height: 1; }
+.status-card-label { font-size: .78rem; color: #64748b; margin-top: .25rem; }
+
+.card-raised .status-card-icon { background: #eff6ff; color: #1d4ed8; }
+.card-pending .status-card-icon { background: #fffbeb; color: #b45309; }
+.card-progress .status-card-icon { background: #f5f3ff; color: #6d28d9; }
+.card-solved .status-card-icon { background: #ecfdf5; color: #047857; }
+.card-closed .status-card-icon { background: #f8fafc; color: #64748b; }
+
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 rgba(16, 185, 129, 0.5);
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.activity-feed-body {
+  max-height: 420px;
+  overflow-y: auto;
+}
+.activity-row {
+  display: flex;
+  align-items: flex-start;
+  gap: .7rem;
+  padding: .75rem 1.1rem;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid #f8fafc;
+  position: relative;
+  &:hover { background: #f8fafc; }
+}
+.activity-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #64748b;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  i { font-size: .85rem; }
+  &.activity-icon-high { background: #fef2f2; color: #dc2626; }
+}
+.activity-content { flex-grow: 1; min-width: 0; }
+.activity-text { font-size: .82rem; color: #334155; line-height: 1.35; }
+.activity-time { font-size: .7rem; color: #94a3b8; margin-top: .15rem; }
+.priority-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #dc2626;
+  align-self: center;
+  flex-shrink: 0;
+}

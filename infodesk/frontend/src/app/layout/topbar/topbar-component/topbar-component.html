@@ -11,23 +11,77 @@
       }
     </div>
   }
-  <div class="dropdown">
-    <button type="button" class="btn user-chip dropdown-toggle" data-bs-toggle="dropdown">
-      <div class="avatar">{{ authService.currentUser()?.name?.charAt(0) }}</div>
-      <span class="ms-2">{{ authService.currentUser()?.name }}</span>
-    </button>
-    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-      <li>
-        <span class="dropdown-item-text small text-muted">{{
-          authService.currentUser()?.email
-        }}</span>
-      </li>
-      <li><hr class="dropdown-divider" /></li>
-      <li>
-        <button class="dropdown-item text-danger" (click)="logout()">
-          <i class="ti ti-logout me-2"></i>Logout
-        </button>
-      </li>
-    </ul>
+  <div class="d-flex align-items-center">
+    <div class="position-relative me-3">
+      <button class="icon-btn notification-bell" (click)="toggleNotifications()">
+        <i class="ti ti-bell"></i>
+        @if (pollingService.unreadCount() > 0) {
+          <span class="unread-badge notification-badge">{{
+            pollingService.unreadCount() > 9 ? '9+' : pollingService.unreadCount()
+          }}</span>
+        }
+      </button>
+
+      @if (showNotifications()) {
+        <div class="notification-dropdown-backdrop" (click)="showNotifications.set(false)"></div>
+        <div class="notification-dropdown">
+          <div class="notification-dropdown-header">
+            <span class="fw-semibold small">Notifications</span>
+            @if (pollingService.unreadCount() > 0) {
+              <button class="btn btn-sm btn-link p-0" (click)="markAllRead()">Mark all read</button>
+            }
+          </div>
+
+          <div class="notification-list">
+            @if (loadingNotifications()) {
+              <div class="text-center py-4 text-muted small">Loading...</div>
+            } @else if (notifications().length === 0) {
+              <div class="text-center py-4 text-muted small">
+                <i class="ti ti-bell-off fs-3 d-block mb-1"></i>
+                No notifications yet
+              </div>
+            } @else {
+              @for (n of notifications(); track n.id) {
+                <div
+                  class="notification-item"
+                  [class.notification-unread]="!n.isRead"
+                  (click)="openNotification(n)"
+                >
+                  <div class="notification-icon">
+                    <i class="ti" [class]="notificationIcon(n.type)"></i>
+                  </div>
+                  <div class="notification-content">
+                    <div class="notification-message">{{ n.message }}</div>
+                    <div class="notification-time">{{ n.createdAt | date: 'MMM d, h:mm a' }}</div>
+                  </div>
+                  @if (!n.isRead) {
+                    <span class="notification-unread-dot"></span>
+                  }
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+    </div>
+    <div class="dropdown">
+      <button type="button" class="btn user-chip dropdown-toggle" data-bs-toggle="dropdown">
+        <div class="avatar">{{ authService.currentUser()?.name?.charAt(0) }}</div>
+        <span class="ms-2">{{ authService.currentUser()?.name }}</span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+        <li>
+          <span class="dropdown-item-text small text-muted">{{
+            authService.currentUser()?.email
+          }}</span>
+        </li>
+        <li><hr class="dropdown-divider" /></li>
+        <li>
+          <button class="dropdown-item text-danger" (click)="logout()">
+            <i class="ti ti-logout me-2"></i>Logout
+          </button>
+        </li>
+      </ul>
+    </div>
   </div>
 </div>

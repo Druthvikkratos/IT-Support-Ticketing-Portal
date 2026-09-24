@@ -1,0 +1,70 @@
+<div class="mb-4">
+  <h4 class="fw-bold mb-0">Dashboard</h4>
+  <p class="text-muted small mb-0">Live overview of all ticket activity</p>
+</div>
+
+@if (loading()) {
+  <div class="text-center py-5 text-muted">Loading dashboard...</div>
+} @else if (summary(); as s) {
+
+  <!-- STATUS CARDS -->
+  <div class="row g-3 mb-4">
+    @for (card of statusCards; track card.key) {
+      <div class="col-6 col-lg">
+        <div class="status-card" [class]="card.class">
+          <div class="status-card-icon"><i class="ti" [class]="card.icon"></i></div>
+          <div class="status-card-value">{{ s.statusCounts[card.key] }}</div>
+          <div class="status-card-label">{{ card.label }}</div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="row g-4">
+    <!-- TREND CHART -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+          <span class="fw-semibold small text-muted">TICKETS RAISED — LAST 14 DAYS</span>
+          <span class="priority-pill priority-high">{{ s.priorityCounts.high }} High Priority</span>
+        </div>
+        <div class="card-body">
+          <div style="height: 260px;">
+            <canvas #trendCanvas></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE ACTIVITY FEED -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100 activity-feed-card">
+        <div class="card-header bg-white py-3 d-flex align-items-center gap-2">
+          <span class="live-dot"></span>
+          <span class="fw-semibold small text-muted">LIVE ACTIVITY</span>
+        </div>
+        <div class="card-body p-0 activity-feed-body">
+          @if (s.activityFeed.length === 0) {
+            <div class="text-center py-5 text-muted small">No activity yet</div>
+          } @else {
+            @for (event of s.activityFeed; track event.id) {
+              <a [routerLink]="['/tickets', event.ticketId]" class="activity-row">
+                <div class="activity-icon" [class.activity-icon-high]="event.priority === 'high'">
+                  <i class="ti" [class]="activityIcon(event.type)"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-text">
+                    <strong>{{ event.actorName }}</strong> {{ event.label }}
+                    <span class="text-muted">on {{ event.ticketNumber }}</span>
+                  </div>
+                  <div class="activity-time">{{ event.createdAt | relativeTime }}</div>
+                </div>
+                @if (event.priority === 'high') { <span class="priority-dot"></span> }
+              </a>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -10,9 +10,21 @@ import { TicketsModule } from './modules/tickets/tickets/tickets.module';
 import { AttachementsModule } from './modules/tickets/attachments/attachements/attachements.module';
 import { ChatModule } from './modules/tickets/chat/chat/chat.module';
 import { NotificationModule } from './modules/notifications/notifications/notification.module';
+import { DashboardModule } from './modules/dashboard/dashboard/dashboard.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsersModule, IssueTypesModule, FormFieldsModule, TicketsModule, AttachementsModule, ChatModule, NotificationModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    IssueTypesModule,
+    FormFieldsModule,
+    TicketsModule,
+    AttachementsModule,
+    ChatModule,
+    NotificationModule,
+    DashboardModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

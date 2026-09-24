@@ -5,6 +5,7 @@ import { User } from '../models/user.model';
 import { catchError, finalize, Observable, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SocketService } from './socket-service';
+import { PollingService } from './polling-service';
 
 @Injectable({
   providedIn: 'root',
