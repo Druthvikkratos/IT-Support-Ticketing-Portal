@@ -77,6 +77,11 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () => import('./features/admin/reports/reports').then((m) => m.Reports),
       },
+      {
+        path: 'history',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/admin/history/history').then((m) => m.History),
+      },
     ],
   },
   {

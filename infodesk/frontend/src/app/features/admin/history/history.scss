@@ -1,0 +1,13 @@
+.history-event-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: #f5f3ff;
+  color: #6d28d9;
+  display: flex; align-items: center; justify-content: center;
+  i { font-size: .9rem; }
+
+  &.history-event-icon-msg {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+}

@@ -166,7 +166,7 @@ export class HistoryService {
       const [statusActors, messageActors] = await Promise.all([
         this.prisma.ticketStatusHistory.findMany({
           distinct: ['changedById'],
-          select: { changedBy: { select: { id: true } } },
+          select: { changedBy: { select: { id: true, name: true, role: true } } },
         }),
         this.prisma.ticketMessage.findMany({
           distinct: ['senderId'],

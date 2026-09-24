@@ -1,0 +1,150 @@
+<div class="mb-4">
+  <h4 class="fw-bold mb-0">History</h4>
+  <p class="text-muted small mb-0">
+    Full audit trail of status changes and messages across every ticket
+  </p>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white py-3">
+    <div class="d-flex flex-wrap gap-2 mb-2">
+      <div class="input-group" style="max-width: 280px">
+        <span class="input-group-text bg-white"><i class="ti ti-search"></i></span>
+        <input
+          class="form-control"
+          placeholder="Search ticket number or title..."
+          [formControl]="searchControl"
+        />
+      </div>
+
+      <select
+        class="form-select"
+        style="max-width: 170px"
+        (change)="typeFilter.set($any($event.target).value); page.set(1)"
+      >
+        <option value="">All Event Types</option>
+        <option value="status_change">Status Changes</option>
+        <option value="message">Messages</option>
+      </select>
+
+      <select
+        class="form-select"
+        style="max-width: 200px"
+        (change)="actorFilter.set($any($event.target).value); page.set(1)"
+      >
+        <option value="">All Users</option>
+        @for (actor of actors(); track actor.id) {
+          <option [value]="actor.id">{{ actor.name }} ({{ actor.role }})</option>
+        }
+      </select>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-end gap-2">
+      <div>
+        <label class="form-label small text-muted mb-1">From</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="dateFrom" />
+      </div>
+      <div>
+        <label class="form-label small text-muted mb-1">To</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="dateTo" />
+      </div>
+      <button class="btn btn-sm btn-primary" (click)="applyDateFilter()">Apply</button>
+      @if (dateFrom || dateTo) {
+        <button class="btn btn-sm btn-link text-danger" (click)="clearDateFilter()">
+          Clear dates
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="table-scroll">
+    <table class="table data-table mb-0">
+      <thead>
+        <tr>
+          <th class="col-fit">Event</th>
+          <th class="col-flex">Details</th>
+          <th class="col-fit">Ticket</th>
+          <th class="col-fit">User</th>
+          <th class="col-fit">When</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="5" class="text-center py-5 text-muted">Loading...</td>
+          </tr>
+        } @else if (events().length === 0) {
+          <tr>
+            <td colspan="5" class="text-center py-5 text-muted">
+              No history matches these filters.
+            </td>
+          </tr>
+        } @else {
+          @for (event of events(); track event.id) {
+            <tr>
+              <td class="col-fit">
+                <div
+                  class="history-event-icon"
+                  [class.history-event-icon-msg]="event.type === 'message'"
+                >
+                  <i class="ti" [class]="eventIcon(event.type)"></i>
+                </div>
+              </td>
+              <td class="col-flex">
+                {{ event.label }}
+                @if (event.priority === 'high') {
+                  <span class="priority-pill priority-high ms-2">high</span>
+                }
+              </td>
+              <td class="col-fit">
+                <a
+                  [routerLink]="['/tickets', event.ticketId]"
+                  class="code-chip text-decoration-none"
+                  >{{ event.ticketNumber }}</a
+                >
+                <div class="small text-muted mt-1" style="max-width: 200px">
+                  {{ event.ticketTitle }}
+                </div>
+              </td>
+              <td class="col-fit">
+                {{ event.actorName }}
+                <span
+                  class="role-pill"
+                  [class.role-admin]="event.actorRole === 'admin'"
+                  [class.role-employee]="event.actorRole === 'employee'"
+                >
+                  {{ event.actorRole }}
+                </span>
+              </td>
+              <td class="col-fit text-muted" [title]="event.createdAt | date: 'MMM d, y, h:mm a'">
+                {{ event.createdAt | relativeTime }}
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+    <span class="text-muted small"
+      >{{ total() }} total events · Page {{ page() }} of {{ totalPages() }}</span
+    >
+    <div class="btn-group">
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="page() === 1"
+        (click)="goToPage(page() - 1)"
+      >
+        Previous
+      </button>
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="page() === totalPages()"
+        (click)="goToPage(page() + 1)"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</div>
