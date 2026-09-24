@@ -11,6 +11,7 @@ import { AttachementsModule } from './modules/tickets/attachments/attachements/a
 import { ChatModule } from './modules/tickets/chat/chat/chat.module';
 import { NotificationModule } from './modules/notifications/notifications/notification.module';
 import { DashboardModule } from './modules/dashboard/dashboard/dashboard.module';
+import { ReportModule } from './modules/reports/report/report.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { DashboardModule } from './modules/dashboard/dashboard/dashboard.module'
     ChatModule,
     NotificationModule,
     DashboardModule,
+    ReportModule
   ],
   controllers: [AppController],
   providers: [AppService],
