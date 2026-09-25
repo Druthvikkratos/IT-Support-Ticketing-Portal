@@ -1,8 +1,8 @@
 .detail-row {
   display: flex;
   gap: 1rem;
-  padding: .6rem 0;
-  font-size: .875rem;
+  padding: 0.6rem 0;
+  font-size: 0.875rem;
 }
 .detail-label {
   color: #64748b;
@@ -15,9 +15,14 @@
 }
 
 .detail-avatar {
-  width: 42px; height: 42px; border-radius: 50%;
-  background: #0ea5e9; color: #fff;
-  display: flex; align-items: center; justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -33,7 +38,7 @@
   &:not(:last-child)::before {
     content: '';
     position: absolute;
-    left: -.72rem;
+    left: -0.72rem;
     top: 1rem;
     bottom: 0;
     width: 2px;
@@ -43,34 +48,136 @@
 .timeline-dot {
   position: absolute;
   left: -1rem;
-  top: .25rem;
-  width: 10px; height: 10px;
+  top: 0.25rem;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #cbd5e1;
 
   // reuse the status pill background colors for the dot
-  &.status-raised { background: #3b82f6; }
-  &.status-pending { background: #f59e0b; }
-  &.status-progress { background: #8b5cf6; }
-  &.status-solved { background: #10b981; }
-  &.status-closed { background: #94a3b8; }
+  &.status-raised {
+    background: #3b82f6;
+  }
+  &.status-pending {
+    background: #f59e0b;
+  }
+  &.status-progress {
+    background: #8b5cf6;
+  }
+  &.status-solved {
+    background: #10b981;
+  }
+  &.status-closed {
+    background: #94a3b8;
+  }
 }
 .timeline-time {
-  font-size: .75rem;
+  font-size: 0.75rem;
   color: #94a3b8;
 }
 
 .attachment-row {
   display: flex;
   align-items: center;
-  gap: .6rem;
-  padding: .6rem .8rem;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   color: #0f172a;
-  transition: background-color .15s ease;
+  transition: background-color 0.15s ease;
 
-  &:hover { background: #f8fafc; }
-  i.ti-file { color: #64748b; }
-  i.ti-download { color: #94a3b8; }
+  &:hover {
+    background: #f8fafc;
+  }
+  i.ti-file {
+    color: #64748b;
+  }
+  i.ti-download {
+    color: #94a3b8;
+  }
+}
+
+.assignment-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1px solid #e9ecef;
+  border-left: 4px solid transparent;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.assignment-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+// --- your existing variants stay exactly as-is below ---
+.assignment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.assignment-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.assignment-description {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.assignment-action {
+  white-space: nowrap;
+}
+
+.assignment-unassigned {
+  background: #fff8e6;
+  border-color: #ffe08a;
+  color: #8a6500;
+  border-left-color: #ffc107;
+}
+.assignment-unassigned .assignment-icon {
+  background: #ffd766; // darker than before
+  color: #7a5900;
+}
+.assignment-unassigned .assignment-title {
+  color: #7a5900;
+}
+
+.assignment-mine {
+  background: #ecfdf3;
+  border-color: #b7ebc6;
+  color: #176b3a;
+  border-left-color: #198754;
+}
+.assignment-mine .assignment-icon {
+  background: #9be8b3; 
+  color: #146c43;
+}
+.assignment-mine .assignment-title {
+  color: #146c43;
+}
+
+.assignment-other {
+  background: #eef6ff;
+  border-color: #b8d9ff;
+  color: #175a96;
+}
+.assignment-other .assignment-icon {
+  background: #a8d4ff; // darker than before
+  color: #14558a;
+  border-left-color: #0d6efd;
+}
+.assignment-other .assignment-title {
+  color: #14558a;
 }

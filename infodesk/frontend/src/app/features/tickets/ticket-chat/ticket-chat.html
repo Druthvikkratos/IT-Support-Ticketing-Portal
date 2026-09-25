@@ -30,10 +30,12 @@
           <div class="chat-row" [class.chat-row-mine]="isMine(msg)">
             <div class="chat-bubble" [class.chat-bubble-mine]="isMine(msg)">
               <div class="chat-sender">
-                <span
-                  class="presence-dot"
-                  [class.presence-online]="socketService.isOnline(msg.senderId)"
-                ></span>
+                @if (!isMine(msg)) {
+                  <span
+                    class="presence-dot"
+                    [class.presence-online]="socketService.isOnline(msg.senderId)"
+                  ></span>
+                }
                 {{ msg.sender.name }}
                 <span class="chat-role-tag">{{ msg.sender.role }}</span>
               </div>

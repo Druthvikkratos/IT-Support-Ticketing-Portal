@@ -5,6 +5,12 @@ import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response.model';
 import { CreateAdminPayload, CreateEmployeePayload, User } from '../models/user.model';
 
+export interface AdminOption {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export interface UsersQuery {
   page: number;
   limit: number;
@@ -54,5 +60,15 @@ export class UserService {
 
   reactivate(id: string): Observable<User> {
     return this.http.patch<User>(`${this.base}/${id}/reactivate`, {});
+  }
+
+  allAdminUsers(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.base}/active/admins`);
+  }
+
+  findAllAdmins(): Observable<{ data: AdminOption[] }> {
+    return this.http.get<{ data: AdminOption[] }>(`${environment.apiUrl}/users`, {
+      params: { role: 'admin', limit: '50', isActive: 'true' },
+    });
   }
 }

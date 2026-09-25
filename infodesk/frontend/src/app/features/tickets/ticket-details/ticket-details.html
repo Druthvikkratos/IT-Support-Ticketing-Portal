@@ -24,7 +24,50 @@
           {{ t.priority }}
         </span>
       </div>
-      <h4 class="fw-bold mb-0 mt-2">{{ t.title }}</h4>
+      <h4 class="fw-bold mb-2 mt-2">{{ t.title }}</h4>
+      @if (authService.isAdmin()) {
+        <div
+          class="assignment-banner mb-4"
+          [class.assignment-unassigned]="!t.assignedAdmin"
+          [class.assignment-mine]="t.assignedAdmin?.id === authService.currentUser()?.id"
+          [class.assignment-other]="
+            t.assignedAdmin && t.assignedAdmin.id !== authService.currentUser()?.id
+          "
+        >
+          @if (!t.assignedAdmin) {
+            <div class="assignment-icon"><i class="ti ti-user-question"></i></div>
+            <div class="assignment-content">
+              <div class="assignment-title">Unassigned</div>
+              <div class="assignment-description">
+                This ticket hasn't been assigned to an administrator yet.
+              </div>
+            </div>
+            <button class="btn btn-sm btn-primary assignment-action" (click)="claim(t.id)">
+              <i class="ti ti-hand-click me-1"></i>Assign to Me
+            </button>
+          } @else if (t.assignedAdmin.id === authService.currentUser()?.id) {
+            <div class="assignment-icon"><i class="ti ti-user-check"></i></div>
+            <div class="assignment-content">
+              <div class="assignment-title">Assigned to you</div>
+              <div class="assignment-description">You are currently handling this ticket.</div>
+            </div>
+            <button
+              class="btn btn-sm btn-outline-secondary assignment-action"
+              (click)="openReassign()"
+            >
+              <i class="ti ti-arrow-forward-up me-1"></i>Reassign
+            </button>
+          } @else {
+            <div class="assignment-icon"><i class="ti ti-user"></i></div>
+            <div class="assignment-content">
+              <div class="assignment-title">Assigned to {{ t.assignedAdmin.name }}</div>
+              <div class="assignment-description">
+                This ticket is currently being handled by another administrator.
+              </div>
+            </div>
+          }
+        </div>
+      }
     </div>
 
     <div class="d-flex gap-2">
@@ -58,13 +101,12 @@
       }
     </div>
   </div>
-
   <div class="row g-4">
     <div class="col-lg-8">
       <!-- Ticket details -->
       <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white py-3">
-          <span class="fw-semibold small text-muted">TICKET DETAILS</span>
+          <span class="fw-semibold small text-muted mb-3">TICKET DETAILS</span>
         </div>
         <div class="card-body">
           <div class="detail-row">
@@ -217,6 +259,36 @@
           }
         </div>
       </div>
+      @if (t.assignmentHistory && t.assignmentHistory.length > 0) {
+        <div class="card border-0 shadow-sm mt-4">
+          <div class="card-header bg-white py-3">
+            <span class="fw-semibold small text-muted">ASSIGNMENT TIMELINE</span>
+          </div>
+          <div class="card-body">
+            <div class="timeline">
+              @for (entry of t.assignmentHistory; track entry.id) {
+                <div class="timeline-item">
+                  <div class="timeline-dot status-progress"></div>
+                  <div class="timeline-content">
+                    <div class="small fw-medium">
+                      @if (entry.fromAdmin) {
+                        Reassigned from {{ entry.fromAdmin.name }} to {{ entry.toAdmin.name }}
+                      } @else {
+                        Claimed by {{ entry.toAdmin.name }}
+                      }
+                    </div>
+                    <div class="timeline-time">{{ entry.changedAt | date: 'MMM d, h:mm a' }}</div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        @if (showReassignModal()) {
+          <app-reassign-modal [ticketId]="t.id" (closed)="onReassignClosed($event)" />
+        }
+      }
     </div>
   </div>
 
@@ -227,9 +299,9 @@
       [counterpartName]="
         authService.isAdmin()
           ? t.rasiedBy.name + (t.rasiedBy.employeeCode ? ' (' + t.rasiedBy.employeeCode + ')' : '')
-          : 'IT Support Team'
+          : (t.assignedAdmin?.name ?? 'IT Support Team')
       "
-      [counterpartUserId]="authService.isAdmin() ? t.rasiedBy.id : undefined"
+      [counterpartUserId]="authService.isAdmin() ? t.rasiedBy.id : t.assignedAdmin?.id"
       (closed)="showChat.set(false)"
     />
   }

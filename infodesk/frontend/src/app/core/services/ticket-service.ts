@@ -41,11 +41,11 @@ export class TicketService {
   }
 
   findAll(query: TicketsQuery): Observable<PaginatedResponse<Ticket>> {
-    return this.http.get<PaginatedResponse<Ticket>>(this.base, { params: this.buildParams(query) })
+    return this.http.get<PaginatedResponse<Ticket>>(this.base, { params: this.buildParams(query) });
   }
 
   findOne(id: string): Observable<Ticket> {
-    return this.http.get<Ticket>(`${this.base}/${id}`)
+    return this.http.get<Ticket>(`${this.base}/${id}`);
   }
 
   create(payload: CreateTicketPayload): Observable<Ticket> {
@@ -62,5 +62,12 @@ export class TicketService {
 
   close(id: string): Observable<Ticket> {
     return this.http.patch<Ticket>(`${this.base}/${id}/close`, {});
+  }
+
+  claim(ticketId: string): Observable<Ticket> {
+    return this.http.patch<Ticket>(`${this.base}/${ticketId}/claim`, {});
+  }
+  reassign(ticketId: string, newAdminId: string): Observable<Ticket> {
+    return this.http.patch<Ticket>(`${this.base}/${ticketId}/reassign`, { newAdminId });
   }
 }

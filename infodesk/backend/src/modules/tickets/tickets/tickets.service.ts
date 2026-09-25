@@ -259,6 +259,7 @@ export class TicketsService {
         include: {
           issueType: true,
           rasiedBy: { select: { id: true, name: true, employeeCode: true } },
+          assignedAdmin: { select: { id: true, name: true } },
           statusHistory: {
             orderBy: { changedAt: 'asc' },
             include: {

@@ -1,4 +1,5 @@
 import { TicketAttachment } from "./attachment.model";
+import { User } from "./user.model";
 
 export type Priority = 'low' | 'high';
 export type TicketStatus = 'raised' | 'pending' | 'in_progress' | 'solved' | 'closed';
@@ -22,6 +23,9 @@ export interface Ticket {
   statusHistory?: TicketStatusHistoryEntry[];
   attachments? : TicketAttachment[]
   unreadMessageCount?: number;
+  assignedAdminId: string | null;
+  assignedAdmin: { id: string; name: string } | null;
+  assignmentHistory?: AssignmentEvent[];
 }
 
 export interface CreateTicketPayload {
@@ -49,4 +53,13 @@ export interface TicketStatusHistoryEntry {
   newStatus: TicketStatus;
   changedAt: string;
   changedBy: { id: string; name: string; role: string };
+}
+
+export interface AssignmentEvent {
+  id: string;
+  fromAdminId: string | null;
+  fromAdmin: { name: string } | null;
+  toAdminId: string;
+  toAdmin: { name: string };
+  changedAt: string;
 }

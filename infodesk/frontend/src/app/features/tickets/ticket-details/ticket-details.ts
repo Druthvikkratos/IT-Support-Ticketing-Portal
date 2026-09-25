@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth-service';
 import { FormFieldsService } from '../../../core/services/form-fields-service';
@@ -9,10 +9,13 @@ import Swal from 'sweetalert2';
 import { CommonModule } from '@angular/common';
 import { AttachementService } from '../../../core/services/attachement-service';
 import { TicketChat } from '../ticket-chat/ticket-chat';
+import { User } from '../../../core/models/user.model';
+import { UserService } from '../../../core/services/user-service';
+import { ReassignModal } from '../reassign-modal/reassign-modal';
 
 @Component({
   selector: 'app-ticket-details',
-  imports: [RouterLink, CommonModule, TicketChat],
+  imports: [RouterLink, CommonModule, TicketChat, ReassignModal],
   templateUrl: './ticket-details.html',
   styleUrl: './ticket-details.scss',
 })
@@ -31,13 +34,18 @@ export class TicketDetails {
   loading = signal(true);
   updating = signal(false);
   showChat = signal(false);
+  showReassignModal = signal(false);
+
+  users = signal<User[]>([]);
 
   availableStatuses = computed(() => {
-    const current = this.ticket()?.status;
-    if (!current || current === 'closed') return [];
+    const t = this.ticket();
+    const myId = this.authService.currentUser()?.id;
+
+    if (!t || t.status === 'closed' || t.assignedAdminId !== myId) return [];
 
     const all: TicketStatus[] = ['raised', 'pending', 'in_progress', 'solved'];
-    return all.filter((s) => s !== current);
+    return all.filter((s) => s !== t.status);
   });
 
   canClose = computed(() => {
@@ -205,5 +213,39 @@ export class TicketDetails {
     this.showChat.set(true);
     const current = this.ticket();
     if (current) this.ticket.set({ ...current, unreadMessageCount: 0 });
+  }
+
+  claim(ticketId: string) {
+    this.ticketsService.claim(ticketId).subscribe({
+      next: () => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Ticket assigned to you',
+          timer: 1200,
+          showConfirmButton: false,
+        });
+        this.loadTicket(ticketId);
+      },
+      error: (err) =>
+        Swal.fire({ icon: 'error', title: 'Could not assign', text: err.error?.message }),
+    });
+  }
+
+  async openReassign() {
+    this.showReassignModal.set(true);
+  }
+
+  onReassignClosed(refresh: boolean) {
+    this.showReassignModal.set(false);
+    if (refresh) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Ticket reassigned',
+        timer: 1200,
+        showConfirmButton: false,
+      });
+      const t = this.ticket();
+      if (t) this.loadTicket(t.id);
+    }
   }
 }

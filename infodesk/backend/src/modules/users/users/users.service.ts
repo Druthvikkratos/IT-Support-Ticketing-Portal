@@ -34,9 +34,9 @@ export class UsersService {
     }
 
     const adminCount = await this.prismaService.user.count({
-      where: { role: Role.admin },
+      where: { role: Role.admin, isActive: true }
     });
-    if (adminCount >= 5) {
+    if (adminCount >= 3) {
       this.logger.warn(`Admin creation blocked — max admins (3) reached`);
       throw new BadRequestException('Maximum of 3 admins reached');
     }
@@ -96,7 +96,7 @@ export class UsersService {
       sortDir = 'desc',
     } = query;
     const where: Prisma.UserWhereInput = {};
-    if (role) where.role;
+    if (role) where.role = role;
     if (isActive !== undefined) where.isActive = isActive;
     if (search) {
       where.OR = [

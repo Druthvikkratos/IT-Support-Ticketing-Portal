@@ -4,6 +4,11 @@ import { io, Socket } from 'socket.io-client';
 import { ChatMessage } from '../models/chat-message.model';
 import { environment } from '../../../environments/environment';
 
+interface UserPresence {
+  online: boolean;
+  lastSeen: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -12,7 +17,7 @@ export class SocketService {
 
   connected = signal(false);
   onlineUsers = signal<Set<string>>(new Set());
-  typingUsers = signal<Map<string, string>>(new Map());
+  typingUsers = signal<Map<string, string>>(new Map())
 
   private messageSubject = new Subject<ChatMessage>();
   messages$ = this.messageSubject.asObservable();

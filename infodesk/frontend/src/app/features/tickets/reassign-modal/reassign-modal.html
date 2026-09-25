@@ -1,0 +1,41 @@
+<div class="modal-backdrop-custom" (click)="close()"></div>
+<div class="modal-panel">
+  <div class="modal-content-custom">
+    <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+      <h5 class="fw-bold mb-0">Reassign Ticket</h5>
+      <button class="btn-close" (click)="close()"></button>
+    </div>
+
+    <div class="p-4">
+      @if (errorMessage()) {
+        <div class="alert alert-danger py-2 small">{{ errorMessage() }}</div>
+      }
+
+      @if (loading()) {
+        <div class="text-center py-4 text-muted">Loading Admins....</div>
+      } @else if (admins().length === 0) {
+        <div class="text-center py-4 text-muted small">
+          No other admins available to reassign to.
+        </div>
+      } @else {
+        <label class="form-label small fw-medium">Reassign to</label>
+        <select class="form-select mb-4" [(ngModel)]="selectedAdminId">
+          <option value="" disabled selected>Select an admin..</option>
+          @for (admin of admins(); track admin.id) {
+            <option [value]="admin.id">{{ admin.name }} ({{ admin.email }})</option>
+          }
+        </select>
+        <button
+          class="btn btn-primary w-100"
+          [disabled]="!selectedAdminId || submitting()"
+          (click)="submit()"
+        >
+          @if (submitting()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          Reassign
+        </button>
+      }
+    </div>
+  </div>
+</div>

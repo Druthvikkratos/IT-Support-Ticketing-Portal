@@ -29,7 +29,7 @@ export class TicketChat {
   @Input({ required: true }) ticketId!: string;
   @Input() ticketClosed = false;
   @Output() closed = new EventEmitter<void>();
-  @Input() counterpartName = 'Chat';
+  @Input() counterpartName? = 'Chat';
   @Input() counterpartUserId?: string;
   @Output() markedRead = new EventEmitter<void>();
 
@@ -66,7 +66,6 @@ export class TicketChat {
   ngOnInit() {
     console.log('[Chat] modal opened for ticket', this.ticketId);
     this.loadHistory();
-    this.socketService.connect();
     this.socketService.joinRoom(this.ticketId);
 
     this.chatService.markAsRead(this.ticketId).subscribe({
@@ -249,4 +248,44 @@ export class TicketChat {
   close() {
     this.closed.emit();
   }
+
+  formatLastSeen(lastSeen: string | null): string {
+  if (!lastSeen) {
+    return 'Offline';
+  }
+
+  const date = new Date(lastSeen);
+  const now = new Date();
+
+  const diff = now.getTime() - date.getTime();
+
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 1) {
+    return 'just now';
+  }
+
+  if (minutes < 60) {
+    return `${minutes} min${minutes === 1 ? '' : 's'} ago`;
+  }
+
+  if (hours < 24) {
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  }
+
+  if (days === 1) {
+    return `yesterday at ${date.toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+    })}`;
+  }
+
+  return date.toLocaleDateString([], {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
 }

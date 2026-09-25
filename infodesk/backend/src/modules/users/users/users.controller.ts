@@ -70,8 +70,7 @@ export class UsersController {
   }
 
   @Patch(':id/reactivate')
-  reactivate(@Param('id') id: string){
+  reactivate(@Param('id') id: string) {
     return this.usersSerivce.reactivate(id);
   }
-
 }
