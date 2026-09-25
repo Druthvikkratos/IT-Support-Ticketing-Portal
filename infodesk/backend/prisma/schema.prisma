@@ -76,6 +76,7 @@ model User {
   deletedUsers User[]    @relation("UserDeletedBy")
 
   ticketsRaised      Ticket[]                  @relation("RaisedBy")
+  ticketsAssigned    Ticket[]                  @relation("AssignedAdmin")
   ticketMessages     TicketMessage[]
   ticketMessageReads TicketMessageRead[]
   notifications      Notification[]
@@ -123,10 +124,12 @@ model Ticket {
   phoneNumber       String       @map("phone_number")
   customFieldValues Json?        @map("custom_field_values")
 
-  raisedById    String
-  rasiedBy      User                  @relation("RaisedBy", fields: [raisedById], references: [id])
-  statusHistory TicketStatusHistory[]
-  attachments   TicketAttachment[]
+  raisedById      String
+  rasiedBy        User                  @relation("RaisedBy", fields: [raisedById], references: [id])
+  assignedAdminId String?
+  assignedAdmin   User?                 @relation("AssignedAdmin", fields: [assignedAdminId], references: [id])
+  statusHistory   TicketStatusHistory[]
+  attachments     TicketAttachment[]
 
   isDeleted          Boolean                   @default(false) @map("is_deleted")
   createdAt          DateTime                  @default(now()) @map("created_at")

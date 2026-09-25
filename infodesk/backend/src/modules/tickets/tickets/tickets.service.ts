@@ -265,6 +265,13 @@ export class TicketsService {
               changedBy: { select: { id: true, name: true, role: true } },
             },
           },
+          assignmentHistory: {
+            orderBy: { changedAt: 'asc' },
+            include: {
+              fromAdmin: { select: { name: true } },
+              toAdmin: { select: { name: true } },
+            },
+          },
           attachments: true,
         },
       });
@@ -379,6 +386,18 @@ export class TicketsService {
           `Update ticket status rejected | ticketId=${id} | reason=not_found`,
         );
         throw new NotFoundException('Ticket not found');
+      }
+      if(!ticket.assignedAdminId){
+         this.logger.warn(
+          `Update ticket status failed | ticketId=${id}`,
+        );
+        throw new BadRequestException('Claim this ticket before updating the status')
+      }
+      if(ticket.assignedAdminId !== changedById){
+        this.logger.warn(
+          `Update ticket status failed due to only assigned admin can update this ticket | ticketId=${id}`,
+        );
+        throw new ForbiddenException('Only the assigned admin can update this ticket')
       }
       if (ticket.status === 'closed') {
         this.logger.warn(
@@ -521,6 +540,114 @@ export class TicketsService {
         newStatus,
         changedById,
       },
+    });
+  }
+
+  async claim(ticketId: string, adminId: string) {
+    this.logger.log(
+      `Claim ticket by admin started | ticketId=${ticketId} | adminId=${adminId}`,
+    );
+    try {
+      const ticket = await this.prisma.ticket.findUnique({
+        where: { id: ticketId },
+      });
+      if (!ticket || ticket.isDeleted) {
+        this.logger.warn(
+          `Claim ticket rejected | ticketId=${ticketId} | adminId=${adminId}`,
+        );
+        throw new NotFoundException('Ticket not found');
+      }
+      if (ticket.assignedAdminId) {
+        this.logger.warn(
+          `Claim rejected: ticket ${ticketId} already assigned to ${ticket.assignedAdminId}`,
+        );
+        throw new BadRequestException(
+          'This ticket is already assigned to another admin',
+        );
+      }
+
+      return this.prisma.$transaction(async (tx) => {
+        const updated = await tx.ticket.update({
+          where: { id: ticketId },
+          data: {
+            assignedAdminId: adminId,
+          },
+        });
+        await tx.ticketAssignmentHistory.create({
+          data: {
+            ticketId,
+            fromAdminId: null,
+            toAdminId: adminId,
+          },
+        });
+        this.logger.log(`Ticket ${ticketId} claimed by admin ${adminId}`);
+        return updated;
+      });
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      this.logger.error(
+        `Claim ticket failed | ticketId=${ticketId} | adminId=${adminId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new InternalServerErrorException('Failed to create ticket');
+    }
+  }
+
+  async reassign(
+    ticketId: string,
+    newAdminId: string,
+    requestingAdminId: string,
+  ) {
+    this.logger.log(
+      `Reassign ticket by admin started | ticketId=${ticketId} | newAdminId=${newAdminId} | requestingAdminId=${requestingAdminId}`,
+    );
+    const ticket = await this.prisma.ticket.findUnique({
+      where: { id: ticketId },
+    });
+    if (!ticket || ticket.isDeleted) {
+      this.logger.warn(
+        `Claim ticket rejected | ticketId=${ticketId} | newAdminId=${newAdminId} | requestingAdminId=${requestingAdminId}`,
+      );
+      throw new NotFoundException('Ticket not found');
+    }
+    if (ticket.assignedAdminId !== requestingAdminId) {
+      this.logger.warn(
+        `Reassign rejected: admin ${requestingAdminId} does not own ticket ${ticketId}`,
+      );
+      throw new ForbiddenException(
+        'Only the assigned admin can reassign this ticket',
+      );
+    }
+
+    const targetAdmin = await this.prisma.user.findUnique({
+      where: { id: newAdminId },
+    });
+    if (!targetAdmin || targetAdmin.role !== 'admin' || !targetAdmin.isActive) {
+      throw new BadRequestException('Invalid Target Admin');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.ticket.update({
+        where: { id: ticketId },
+        data: {
+          assignedAdminId: newAdminId,
+        },
+      });
+      await tx.ticketAssignmentHistory.create({
+        data: {
+          ticketId,
+          fromAdminId: requestingAdminId,
+          toAdminId: newAdminId,
+        },
+      });
+      this.notificationService.create(newAdminId, 'status_changed', `Ticket ${ticket.ticketNumber} was reassigned to you`, ticketId)
+      .catch((err) => this.logger.error(`Notification dispatch failed for reassign: ${err.message}`))
+      this.logger.log(
+        `Ticket ${ticketId} reassigned from ${requestingAdminId} to ${newAdminId}`,
+      );
+      return updated;
     });
   }
 }

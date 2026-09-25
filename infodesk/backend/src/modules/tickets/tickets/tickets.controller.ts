@@ -66,4 +66,16 @@ export class TicketsController {
   close(@Param('id') id: string, @CurrentUser() user) {
     return this.ticketService.closeByEmployee(id, user.userId);
   }
+
+  @Patch(':id/claim')
+  @Roles('admin')
+  claim(@Param('id') id: string, @CurrentUser() user){
+    return this.ticketService.claim(id, user.userId)
+  }
+
+  @Patch(':id/reassign')
+  @Roles('admin')
+  reassign(@Param('id') id: string, @Body('newAdminId') newAdminId: string, @CurrentUser() user ){
+    return this.ticketService.reassign(id, newAdminId, user.userId)
+  }
 }

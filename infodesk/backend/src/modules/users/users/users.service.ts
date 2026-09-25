@@ -36,7 +36,7 @@ export class UsersService {
     const adminCount = await this.prismaService.user.count({
       where: { role: Role.admin },
     });
-    if (adminCount >= 3) {
+    if (adminCount >= 5) {
       this.logger.warn(`Admin creation blocked — max admins (3) reached`);
       throw new BadRequestException('Maximum of 3 admins reached');
     }
