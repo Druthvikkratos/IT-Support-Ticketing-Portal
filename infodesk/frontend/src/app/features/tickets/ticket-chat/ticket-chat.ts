@@ -18,6 +18,7 @@ import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import { CommonModule } from '@angular/common';
 import { AttachementService } from '../../../core/services/attachement-service';
+import { UserService } from '../../../core/services/user-service';
 
 @Component({
   selector: 'app-ticket-chat',
@@ -40,6 +41,7 @@ export class TicketChat {
   private chatService = inject(ChatService);
   private attachmentsService = inject(AttachementService);
   authService = inject(AuthService);
+  private userService = inject(UserService)
 
   messages = signal<ChatMessage[]>([]);
   loading = signal(true);
@@ -64,9 +66,16 @@ export class TicketChat {
   });
 
   ngOnInit() {
-    console.log('[Chat] modal opened for ticket', this.ticketId);
     this.loadHistory();
     this.socketService.joinRoom(this.ticketId);
+    if(this.counterpartUserId){
+      this.userService.getUserById(this.counterpartUserId).subscribe((user) => {
+        this.counterpartName = user.name
+        if(user.lastSeen){
+          this.socketService.setInitialLastSeen(user.lastSeen)
+        }
+      })
+    }
 
     this.chatService.markAsRead(this.ticketId).subscribe({
       next: () => this.markedRead.emit(),

@@ -12,6 +12,17 @@
           }
           {{ counterpartName }}
         </h5>
+        <div class="small text-muted">
+          @if (counterpartUserId && socketService.isOnline(counterpartUserId)) {
+            <span class="text-success">Online</span>
+          } @else {
+            @if (socketService.getLastSeen(counterpartUserId); as lastSeen) {
+              Last seen {{ lastSeen | date: 'shortTime' }}
+            } @else {
+              Offline
+            }
+          }
+        </div>
         <div class="small text-muted">Ticket chat</div>
       </div>
       <button class="btn-close" (click)="close()"></button>

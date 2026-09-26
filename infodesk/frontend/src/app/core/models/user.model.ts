@@ -12,6 +12,7 @@ export interface User {
     isActive: Boolean;
     createdAt: string;
     createdBy?: {id: string, name: string} | null
+    lastSeen: string
 }
 
 export interface CreateAdminPayload{

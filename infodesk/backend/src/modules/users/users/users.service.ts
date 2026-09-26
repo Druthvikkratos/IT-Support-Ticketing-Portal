@@ -224,4 +224,5 @@ export class UsersService {
       data: { isActive: true, deletedAt: null, deletedById: null },
     });
   }
+
 }

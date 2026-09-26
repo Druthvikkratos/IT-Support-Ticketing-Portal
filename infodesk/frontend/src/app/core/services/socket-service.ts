@@ -17,7 +17,8 @@ export class SocketService {
 
   connected = signal(false);
   onlineUsers = signal<Set<string>>(new Set());
-  typingUsers = signal<Map<string, string>>(new Map())
+  typingUsers = signal<Map<string, string>>(new Map());
+  lastSeenUsers = signal<Map<string, Date>>(new Map());
 
   private messageSubject = new Subject<ChatMessage>();
   messages$ = this.messageSubject.asObservable();
@@ -54,17 +55,40 @@ export class SocketService {
       console.warn('[Socket] server error:', err.message);
       this.errorSubject.next(err.message);
     });
-    this.socket.on('presenceSnapshot', (userIds: string[]) => {
-      this.onlineUsers.set(new Set(userIds));
-    });
+    // this.socket.on('presenceSnapshot', (userIds: string[]) => {
+    //   this.onlineUsers.set(new Set(userIds));
+    // });
+    this.socket.on(
+      'presenceSnapshot',
+      (data: { onlineUserIds: string[]; lastSeenMap: Record<string, string> }) => {
+        this.onlineUsers.set(new Set(data.onlineUserIds));
+        const map = new Map<string, Date>();
+        for (const [userId, isoString] of Object.entries(data.lastSeenMap)) {
+          map.set(userId, new Date(isoString));
+        }
+        this.lastSeenUsers.set(map);
+      },
+    );
 
-    this.socket.on('presenceChanged', ({ userId, online }: { userId: string; online: boolean }) => {
-      this.onlineUsers.update((current) => {
-        const updated = new Set(current);
-        online ? updated.add(userId) : updated.delete(userId);
-        return updated;
-      });
-    });
+    this.socket.on(
+      'presenceChanged',
+      ({ userId, online, lastSeen }: { userId: string; online: boolean; lastSeen?: string }) => {
+        this.onlineUsers.update((current) => {
+          const updated = new Set(current);
+          online ? updated.add(userId) : updated.delete(userId);
+          return updated;
+        });
+        this.lastSeenUsers.update((map) => {
+          const updated = new Map(map);
+          if (online) {
+            updated.delete(userId);
+          } else if (lastSeen) {
+            updated.set(userId, new Date(lastSeen));
+          }
+          return updated;
+        });
+      },
+    );
     this.socket.on('userTyping', ({ userId, name }: { userId: string; name: string }) => {
       console.log('[Socket] userTyping received:', userId, name);
       this.typingUsers.update((current) => new Map(current).set(userId, name));
@@ -80,7 +104,7 @@ export class SocketService {
   }
 
   joinRoom(ticketId: string) {
-    this.typingUsers.set(new Map()); 
+    this.typingUsers.set(new Map());
     this.socket?.emit('joinTicketRoom', ticketId);
   }
 
@@ -108,9 +132,25 @@ export class SocketService {
     this.socket?.emit('stopTyping', { ticketId });
   }
 
+  setInitialLastSeen(userId: string, lastSeenIso?: string | Date | null){
+    if (!lastSeenIso) return;
+    
+    this.lastSeenUsers.update((map) => {
+      const updated = new Map(map);
+      updated.set(userId, new Date(lastSeenIso));
+      return updated;
+    });
+  }
+
   isOnline(userId: string): boolean {
+    if (!userId) return false;
     return this.onlineUsers().has(userId);
   }
+
+  getLastSeen(userId?: string): Date | null {
+    if(!userId) return null
+    return this.lastSeenUsers().get(userId) ?? null;
+  } 
 
   disconnect() {
     this.socket?.disconnect();

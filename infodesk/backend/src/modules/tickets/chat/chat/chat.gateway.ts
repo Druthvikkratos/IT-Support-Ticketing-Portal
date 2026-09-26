@@ -23,6 +23,7 @@ import { PrismaService } from 'src/modules/prisma/prisma/prisma.service';
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ChatGateway.name);
   private onlineUsers = new Map<string, number>();
+  private lastSeenUsers = new Map<string, Date>();
 
   @WebSocketServer()
   server: Server;
@@ -46,13 +47,24 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
       client.data.user = user;
+      const lastSeenObj = Object.fromEntries(
+        Array.from(this.lastSeenUsers.entries()).map(([id, date]) => [
+          id,
+          date.toISOString(),
+        ]),
+      );
       this.logger.log(
         `Socket connected: ${client.id} (user ${user.userId}, role ${user.role})`,
       );
-      client.emit('presenceSnapshot', Array.from(this.onlineUsers.keys()));
+      // client.emit('presenceSnapshot', Array.from(this.onlineUsers.keys()));
+      client.emit('presenceSnapshot', {
+        onlineUserIds: Array.from(this.onlineUsers.keys()),
+        lastSeenMap: lastSeenObj,
+      });
       const currentCount = this.onlineUsers.get(user.userId) ?? 0;
       this.onlineUsers.set(user.userId, currentCount + 1);
       if (currentCount === 0) {
+        this.lastSeenUsers.delete(user.userId);
         // this user just came online (first tab/connection) — tell everyone
         this.server.emit('presenceChanged', {
           userId: user.userId,
@@ -69,7 +81,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket) {
     const user: SocketUser | undefined = client.data.user;
     if (!user) return;
     this.logger.log(
@@ -79,10 +91,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const newCount = Math.max(0, currentCount - 1);
     if (newCount === 0) {
       this.onlineUsers.delete(user.userId);
+      const now = new Date();
+      this.lastSeenUsers.set(user.userId, now);
       this.server.emit('presenceChanged', {
         userId: user.userId,
         online: false,
+        lastSeen: now.toISOString(),
       });
+      try {
+        await this.prisma.user.update({
+          where: { id: user.userId },
+          data: { lastSeen: now },
+        });
+        this.logger.log(`User ${user.userId} is OFFLINE. DB updated.`);
+      } catch (error) {
+        this.logger.error(
+          `Failed to update lastSeen for user ${user.userId}`,
+          error,
+        );
+      }
       this.logger.log(`User ${user.userId} is now OFFLINE`);
     } else {
       this.onlineUsers.set(user.userId, newCount);
@@ -206,7 +233,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       where: { id: ticketId },
     });
     if (!ticket) return;
-  
+
     if (sender.role === 'employee') {
       await this.notificationService.notifyAllAdmins(
         'new_message',
@@ -221,5 +248,37 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         ticketId,
       );
     }
+  }
+
+  @SubscribeMessage('getPresenceSnapshot')
+  async handleSnapshot(client: Socket, userIds: string[]) {
+    // Return who is currently online, and lastSeen timestamps for the rest
+    const offlineUserIds = userIds.filter((id) => !this.onlineUsers.has(id));
+    const lastSeenMap = await this.getLastSeenForUsers(offlineUserIds);
+
+    client.emit('presenceSnapshot', {
+      onlineUserIds: Array.from(this.onlineUsers.keys()),
+      lastSeenMap,
+    });
+  }
+
+  private async getLastSeenForUsers(
+    userIds: string[],
+  ): Promise<Record<string, string>> {
+    const users = await this.prisma.user.findMany({
+      where: {
+        id: { in: userIds },
+        lastSeen: { not: null },
+      },
+      select: { id: true, lastSeen: true },
+    });
+
+    const lastSeenMap: Record<string, string> = {};
+    for (const u of users) {
+      if (u.lastSeen) {
+        lastSeenMap[u.id] = u.lastSeen.toISOString();
+      }
+    }
+    return lastSeenMap;
   }
 }

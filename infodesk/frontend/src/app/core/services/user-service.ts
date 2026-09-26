@@ -62,13 +62,13 @@ export class UserService {
     return this.http.patch<User>(`${this.base}/${id}/reactivate`, {});
   }
 
-  allAdminUsers(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.base}/active/admins`);
-  }
-
   findAllAdmins(): Observable<{ data: AdminOption[] }> {
     return this.http.get<{ data: AdminOption[] }>(`${environment.apiUrl}/users`, {
       params: { role: 'admin', limit: '50', isActive: 'true' },
     });
+  }
+
+  getUserById(id?: string): Observable<User> {
+    return this.http.get<User>(`${this.base}/${id}`);
   }
 }
