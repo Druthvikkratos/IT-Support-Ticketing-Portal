@@ -87,6 +87,11 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () => import('./features/admin/history/history').then((m) => m.History),
       },
+      {
+        path: 'my-profile',
+        loadComponent: () =>
+          import('./features/employee/my-profile/my-profile').then((m) => m.MyProfile),
+      },
     ],
   },
   {
