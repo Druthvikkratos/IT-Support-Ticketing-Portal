@@ -7,10 +7,11 @@ import { User } from '../../../core/models/user.model';
 import { DatePipe } from '@angular/common';
 import { UserFormModal } from '../user-form-modal/user-form-modal';
 import Swal from 'sweetalert2';
+import { BulkUploadModal } from '../bulk-upload-modal/bulk-upload-modal';
 
 @Component({
   selector: 'app-users-list',
-  imports: [ReactiveFormsModule, DatePipe, UserFormModal],
+  imports: [ReactiveFormsModule, DatePipe, UserFormModal, BulkUploadModal],
   templateUrl: './users-list.html',
   styleUrl: './users-list.scss',
 })
@@ -37,6 +38,7 @@ export class UsersList {
   showModal = signal(false);
   editingUser = signal<User | null>(null);
   statusFilter = signal<'true' | 'false'>('true');
+  showBulkUploadModal = signal(false);
 
   constructor() {
     effect(() => {
@@ -203,6 +205,58 @@ export class UsersList {
             icon: 'error',
             title: 'Error',
             text: err.error?.message || 'Something went wrong',
+          }),
+      });
+    });
+  }
+
+  onBulkUploadClosed(refresh: boolean) {
+    this.showBulkUploadModal.set(false);
+    if (refresh)
+      this.fetch(
+        this.page(),
+        this.limit(),
+        this.search(),
+        this.roleFilter(),
+        this.statusFilter(),
+        this.sortField(),
+        this.sortDir(),
+      );
+  }
+
+  permanentDelete(user: User) {
+    if (user.role !== 'employee') return;
+    Swal.fire({
+      title: `Permanently delete ${user.name}?`,
+      html: `This <strong>cannot be undone</strong>. All of their tickets, chat messages, attachments, and notification history will be permanently erased.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Yes, delete permanently',
+      input: 'text',
+      inputPlaceholder: `Type "${user.name}" to confirm`,
+      inputValidator: (value) => (value !== user.name ? 'Name does not match' : undefined),
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.userService.permanentDelete(user.id).subscribe({
+        next: () => {
+          Swal.fire({ icon: 'success', title: 'Deleted', timer: 1400, showConfirmButton: false });
+          this.fetch(
+            this.page(),
+            this.limit(),
+            this.search(),
+            this.roleFilter(),
+            this.statusFilter(),
+            this.sortField(),
+            this.sortDir(),
+          );
+        },
+        error: (err: any) =>
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.error?.message || 'Could not delete this user',
           }),
       });
     });

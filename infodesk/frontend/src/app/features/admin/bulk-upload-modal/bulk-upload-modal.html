@@ -1,0 +1,82 @@
+<div class="modal-backdrop-custom" (click)="close()"></div>
+<div class="modal-panel">
+  <div class="modal-content-custom">
+    <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+      <h5 class="fw-bold mb-0">Bulk Upload Employees</h5>
+      <button class="btn-close" (click)="close()"></button>
+    </div>
+
+    <div class="p-4">
+      <div class="bulk-step">
+        <div class="bulk-step-number">1</div>
+        <div class="flex-grow-1">
+          <div class="fw-medium small">Download the template</div>
+          <p class="text-muted small mb-2">
+            Fill in employee_code (4 digits), employee_name, and email for each row.
+          </p>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            [disabled]="downloadingTemplate()"
+            (click)="downloadTemplate()"
+          >
+            @if (downloadingTemplate()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            <i class="ti ti-download me-1"></i>Download Template
+          </button>
+        </div>
+      </div>
+
+      <div class="bulk-step">
+        <div class="bulk-step-number">2</div>
+        <div class="flex-grow-1">
+          <div class="fw-medium small">Upload your completed file</div>
+          <p class="text-muted small mb-2">
+            Passwords are auto-generated — you don't need to include them.
+          </p>
+
+          <input
+            type="file"
+            class="d-none"
+            #fileInput
+            (change)="onFileSelected($event)"
+            accept=".xlsx,.xls"
+          />
+          <button class="btn btn-sm btn-outline-secondary" (click)="fileInput.click()">
+            <i class="ti ti-paperclip me-1"></i>Choose File
+          </button>
+
+          @if (selectedFile()) {
+            <div class="selected-file-chip mt-2">
+              <i class="ti ti-file-spreadsheet"></i>
+              <span class="flex-grow-1">{{ selectedFile()!.name }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="alert alert-danger py-2 small mt-2">{{ errorMessage() }}</div>
+      }
+
+      <div class="alert alert-light border small text-muted mt-3">
+        <i class="ti ti-info-circle me-1"></i>
+        After upload, a results file downloads automatically — every row is marked
+        <strong>Success</strong> or shows the exact reason it failed (duplicate code, invalid email,
+        gmail not allowed, etc).
+      </div>
+
+      <button
+        class="btn btn-primary w-100 mt-3"
+        [disabled]="!selectedFile() || uploading()"
+        (click)="upload()"
+      >
+        @if (uploading()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Processing...
+        } @else {
+          Upload & Create Employees
+        }
+      </button>
+    </div>
+  </div>
+</div>

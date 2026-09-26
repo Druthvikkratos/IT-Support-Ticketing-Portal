@@ -3,9 +3,17 @@
     <h4 class="fw-bold mb-0">User Management</h4>
     <p class="text-muted small mb-0">{{ total() }} total users</p>
   </div>
-  <button class="btn btn-primary d-flex align-items-center gap-2" (click)="openCreate()">
-    <i class="ti ti-plus"></i> Add User
-  </button>
+  <div class="d-flex gap-2">
+    <button
+      class="btn btn-bulk-upload d-flex align-items-center gap-2"
+      (click)="showBulkUploadModal.set(true)"
+    >
+      <i class="ti ti-upload"></i> Bulk Upload
+    </button>
+    <button class="btn btn-primary d-flex align-items-center gap-2" (click)="openCreate()">
+      <i class="ti ti-plus"></i> Add User
+    </button>
+  </div>
 </div>
 
 <div class="card border-0 shadow-sm users-card">
@@ -141,9 +149,15 @@
                       [class.ti-user-check]="!user.isActive"
                     ></i>
                   </button>
-                  <!-- <button class="icon-btn icon-btn-danger" title="Delete user">
-                    <i class="ti ti-trash"></i>
-                  </button> -->
+                  @if (user.role === 'employee') {
+                    <button
+                      class="icon-btn icon-btn-danger"
+                      title="Permanently delete"
+                      (click)="permanentDelete(user)"
+                    >
+                      <i class="ti ti-trash"></i>
+                    </button> 
+                  }
                 </div>
               </td>
             </tr>
@@ -176,4 +190,8 @@
 
 @if (showModal()) {
   <app-user-form-modal [editingUser]="editingUser()" (closed)="onModalClosed($event)" />
+}
+
+@if (showBulkUploadModal()) {
+  <app-bulk-upload-modal (closed)="onBulkUploadClosed($event)" />
 }

@@ -4,15 +4,12 @@ import { io, Socket } from 'socket.io-client';
 import { ChatMessage } from '../models/chat-message.model';
 import { environment } from '../../../environments/environment';
 
-interface UserPresence {
-  online: boolean;
-  lastSeen: string | null;
-}
 
 @Injectable({
   providedIn: 'root',
 })
 export class SocketService {
+  
   private socket: Socket | null = null;
 
   connected = signal(false);
@@ -28,9 +25,7 @@ export class SocketService {
 
   connect() {
     if (this.socket?.connected) return;
-
     this.socket = io(`${environment.wsUrl}/chat`, { withCredentials: true });
-
     this.socket.on('connect', () => {
       console.log('[Socket] connected:', this.socket?.id);
       this.connected.set(true);

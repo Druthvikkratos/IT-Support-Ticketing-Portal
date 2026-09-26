@@ -13,11 +13,16 @@ import { CreateEmployeeDto } from '../dto/create-employee.dto';
 import { FindUserQueryDto } from '../dto/find-users-query.dto';
 import { UpdateAdminDto } from '../dto/update-admin.dto';
 import { UpdateEmployeeDto } from '../dto/update-employee.dto';
+import * as ExcelJS from 'exceljs';
+import { NotificationService } from 'src/modules/notifications/notifications/notification.service';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private notificationService: NotificationService,
+  ) {}
 
   async createAdmin(dto: CreateAdminDto, createdById: string) {
     this.logger.log(
@@ -34,7 +39,7 @@ export class UsersService {
     }
 
     const adminCount = await this.prismaService.user.count({
-      where: { role: Role.admin, isActive: true }
+      where: { role: Role.admin, isActive: true },
     });
     if (adminCount >= 3) {
       this.logger.warn(`Admin creation blocked — max admins (3) reached`);
@@ -225,4 +230,252 @@ export class UsersService {
     });
   }
 
+  async generateBulkUploadTemplate(): Promise<Buffer> {
+    try {
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'InfoDesk';
+      const sheet = workbook.addWorksheet('Employees');
+      sheet.columns = [
+        { header: 'employee_code', key: 'employee_code', width: 16 },
+        { header: 'employee_name', key: 'employee_name', width: 26 },
+        { header: 'email', key: 'email', width: 30 },
+      ];
+      sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      sheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF0EA5E9' },
+      };
+      sheet.getColumn('employee_code').numFmt = '@';
+
+      sheet.addRow({
+        employee_code: '0101',
+        employee_name: 'Jane Doe',
+        email: 'jane.doe@infomapglobal.com',
+      });
+      sheet.getRow(2).font = { italic: true, color: { argb: 'FF94A3B8' } };
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      this.logger.log('Bulk Upload template generated');
+      return buffer as unknown as Buffer;
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to generate bulk upload template: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async bulkCreateEmployees(
+    fileBuffer: Buffer,
+    createdById: string,
+  ): Promise<Buffer> {
+    try {
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(fileBuffer as any);
+      const sheet = workbook.worksheets[0];
+      if (!sheet) throw new BadRequestException('Uploaded has no worksheet');
+      interface RowResult {
+        employee_code: string;
+        employee_name: string;
+        email: string;
+        remark: string;
+      }
+      const results: RowResult[] = [];
+      const seenCodes = new Set<string>();
+      const seenEmails = new Set<string>();
+      const readCellText = (cellValue: any): string => {
+        if (cellValue === null || cellValue === undefined) return '';
+        if (typeof cellValue === 'object') {
+          if ('text' in cellValue) return String(cellValue.text).trim();
+          if ('result' in cellValue) return String(cellValue.result).trim();
+          return '';
+        }
+        return String(cellValue).trim();
+      };
+      for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
+        const row = sheet.getRow(rowNumber);
+        let employeeCode = readCellText(row.getCell(1).value);
+        const employeeName = readCellText(row.getCell(2).value);
+        const email = readCellText(row.getCell(3).value).toLowerCase();
+
+        if (!employeeCode && !employeeName && !email) {
+          continue;
+        }
+        if (/^\d{1,4}$/.test(employeeCode)) {
+          employeeCode = employeeCode.padStart(4, '0');
+        }
+        let remark = 'Success';
+        if (!employeeCode || !employeeName || !email) {
+          remark = 'Missing required field(s)';
+        } else if (!/^\d{4}$/.test(employeeCode)) {
+          remark = 'Employee code must be exactly 4 digits';
+        } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+          remark = 'Invalid email format';
+        } else if (email.endsWith('@gmail.com')) {
+          remark = 'Gmail not allowed';
+        } else if (seenCodes.has(employeeCode)) {
+          remark = 'Duplicate employee code within this file';
+        } else if (seenEmails.has(email)) {
+          remark = 'Duplicate email within this file';
+        } else {
+          const codeTaken = await this.prismaService.user.findUnique({
+            where: { employeeCode },
+          });
+          const emailTaken = await this.prismaService.user.findUnique({
+            where: { email },
+          });
+          if (codeTaken) remark = 'Employee code already exists in system';
+          else if (emailTaken) remark = 'Email already exists in system';
+        }
+
+        if (remark === 'Success') {
+          try {
+            const rawPassword = generateEmployeePassword(employeeCode);
+            const passwordHash = await bcrypt.hash(rawPassword, 10);
+            await this.prismaService.user.create({
+              data: {
+                role: Role.employee,
+                name: employeeName,
+                employeeCode,
+                email,
+                password: passwordHash,
+                createdById,
+              },
+            });
+            seenCodes.add(employeeCode);
+            seenEmails.add(email);
+          } catch (error: any) {
+            this.logger.error(
+              `Row ${rowNumber} passed validation but creation failed: ${error.message}`,
+              error.stack,
+            );
+            remark = 'Unexpected error during creation — contact support';
+          }
+        }
+        results.push({
+          employee_code: employeeCode,
+          employee_name: employeeName,
+          email,
+          remark,
+        });
+      }
+      const successCount = results.filter((r) => r.remark === 'Success').length;
+      const failCount = results.length - successCount;
+      this.logger.log(
+        `Bulk upload complete: ${successCount} created, ${failCount} failed, by admin ${createdById}`,
+      );
+      this.notificationService
+        .create(
+          createdById,
+          'bulk_upload_result',
+          `Bulk upload complete: ${successCount} created, ${failCount} failed`,
+        )
+        .catch((err) =>
+          this.logger.error(
+            `Notification dispatch failed for bulk upload: ${err.message}`,
+          ),
+        );
+      return this.buildBulkUploadReport(results);
+    } catch (error: any) {
+      if (error instanceof BadRequestException) throw error;
+      this.logger.error(
+        `Bulk upload processing failed: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  private async buildBulkUploadReport(
+    results: { employee_code: string; email: string; remark: string }[],
+  ): Promise<Buffer> {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Upload Results');
+
+    sheet.columns = [
+      { header: 'Employee Code', key: 'employee_code', width: 16 },
+      { header: 'Employee Name', key: 'employee_name', width: 26 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Remark', key: 'remark', width: 36 },
+    ];
+    sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    sheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF0EA5E9' },
+    };
+    for (const row of results) {
+      const addedRows = sheet.addRow(row);
+      const isSuccess = (row.remark = 'Success');
+      addedRows.getCell('remark').font = {
+        color: { argb: isSuccess ? 'FF15803D' : 'FFDC2626' },
+        bold: !isSuccess,
+      };
+      if (!isSuccess) {
+        addedRows.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFFEF2F2' },
+          };
+        });
+      }
+    }
+    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+    return (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
+  }
+
+  async permanentlyDeleteEmployee(id: string) {
+    const user = await this.prismaService.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('User Not found');
+    if (user.role !== Role.employee) {
+      throw new BadRequestException(
+        'Only employee accounts can be permanently deleted. Deactivate admins instead.',
+      );
+    }
+    this.logger.warn(
+      `PERMANENT DELETE initiated for employee ${id} (${user.name}, ${user.employeeCode})`,
+    );
+    try {
+      const ticketCount = await this.prismaService.$transaction(async (tx) => {
+        const tickets = await tx.ticket.findMany({
+          where: { raisedById: id },
+          select: { id: true },
+        });
+        const ticketIds = tickets.map((t) => t.id);
+        if (ticketIds.length > 0) {
+          await tx.ticketMessage.deleteMany({
+            where: { ticketId: { in: ticketIds } },
+          });
+          await tx.ticketStatusHistory.deleteMany({
+            where: { ticketId: { in: ticketIds } },
+          });
+          await tx.ticketAssignmentHistory.deleteMany({
+            where: { ticketId: { in: ticketIds } },
+          });
+          await tx.ticketAttachment.deleteMany({
+            where: { ticketId: { in: ticketIds } },
+          });
+          await tx.ticketMessageRead.deleteMany({
+            where: { ticketId: { in: ticketIds } },
+          });
+          await tx.ticket.deleteMany({ where: { id: { in: ticketIds } } });
+        }
+        await tx.notification.deleteMany({ where: { userId: id } });
+        await tx.user.delete({ where: { id } });
+        return ticketIds.length;
+      });
+      this.logger.log(
+        `PERMANENT DELETE completed for employee ${id}: ${ticketCount} ticket(s) removed`,
+      );
+    } catch (error: any) {
+      this.logger.error(
+        `Permanent delete failed for employee ${id}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
 }

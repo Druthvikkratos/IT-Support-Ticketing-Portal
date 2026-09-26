@@ -1,29 +1,22 @@
 <div class="modal-backdrop-custom" (click)="close()"></div>
 <div class="modal-panel chat-modal-panel">
   <div class="modal-content-custom chat-modal-content">
-    <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
-      <div>
-        <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
-          @if (counterpartUserId) {
-            <span
-              class="presence-dot"
-              [class.presence-online]="socketService.isOnline(counterpartUserId)"
-            ></span>
-          }
-          {{ counterpartName }}
-        </h5>
-        <div class="small text-muted">
-          @if (counterpartUserId && socketService.isOnline(counterpartUserId)) {
-            <span class="text-success">Online</span>
-          } @else {
-            @if (socketService.getLastSeen(counterpartUserId); as lastSeen) {
-              Last seen {{ lastSeen | date: 'shortTime' }}
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <div class="chat-avatar">{{ counterpartName?.charAt(0) }}</div>
+        <div>
+          <h5 class="chat-header-name">{{ counterpartName }}</h5>
+          <div class="chat-header-status">
+            @if (counterpartUserId && socketService.isOnline(counterpartUserId)) {
+              <span class="status-dot-inline online"></span>Online
+            } @else if (socketService.getLastSeen(counterpartUserId); as lastSeen) {
+              <span class="status-dot-inline offline"></span> Last Seen
+              {{ lastSeen | date: 'shortTime' }}
             } @else {
-              Offline
+              <span class="status-dot-inline offline"></span>Offline
             }
-          }
+          </div>
         </div>
-        <div class="small text-muted">Ticket chat</div>
       </div>
       <button class="btn-close" (click)="close()"></button>
     </div>
@@ -43,8 +36,9 @@
               <div class="chat-sender">
                 @if (!isMine(msg)) {
                   <span
-                    class="presence-dot"
-                    [class.presence-online]="socketService.isOnline(msg.senderId)"
+                    class="status-dot-inline"
+                    [class.online]="socketService.isOnline(msg.senderId)"
+                    [class.offline]="!socketService.isOnline(msg.senderId)"
                   ></span>
                 }
                 {{ msg.sender.name }}

@@ -71,4 +71,18 @@ export class UserService {
   getUserById(id?: string): Observable<User> {
     return this.http.get<User>(`${this.base}/${id}`);
   }
+
+  downloadBulkTemplate(): Observable<Blob> {
+    return this.http.get(`${this.base}/bulk-upload/template`, { responseType: 'blob' });
+  }
+
+  bulkUpload(file: File): Observable<Blob> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.base}/bulk-upload`, formData, { responseType: 'blob' });
+  }
+
+  permanentDelete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}/permanent`);
+  }
 }

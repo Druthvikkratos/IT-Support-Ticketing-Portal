@@ -251,7 +251,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('getPresenceSnapshot')
-  async handleSnapshot(client: Socket, userIds: string[]) {
+  async handleSnapshot(@ConnectedSocket()  client: Socket, @MessageBody() userIds: string[]) {
     // Return who is currently online, and lastSeen timestamps for the rest
     const offlineUserIds = userIds.filter((id) => !this.onlineUsers.has(id));
     const lastSeenMap = await this.getLastSeenForUsers(offlineUserIds);

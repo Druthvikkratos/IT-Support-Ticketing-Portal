@@ -41,7 +41,7 @@ export class TicketChat {
   private chatService = inject(ChatService);
   private attachmentsService = inject(AttachementService);
   authService = inject(AuthService);
-  private userService = inject(UserService)
+  private userService = inject(UserService);
 
   messages = signal<ChatMessage[]>([]);
   loading = signal(true);
@@ -68,13 +68,13 @@ export class TicketChat {
   ngOnInit() {
     this.loadHistory();
     this.socketService.joinRoom(this.ticketId);
-    if(this.counterpartUserId){
+    if (this.counterpartUserId) {
       this.userService.getUserById(this.counterpartUserId).subscribe((user) => {
-        this.counterpartName = user.name
-        if(user.lastSeen){
-          this.socketService.setInitialLastSeen(user.lastSeen)
+        this.counterpartName = user.name;
+        if (user.lastSeen) {
+          this.socketService.setInitialLastSeen(user.lastSeen);
         }
-      })
+      });
     }
 
     this.chatService.markAsRead(this.ticketId).subscribe({
@@ -142,18 +142,10 @@ export class TicketChat {
     }, 2000);
   }
 
-  // send() {
-  //   const text = this.messageText.trim();
-  //   if (!text) return;
-  //   this.socketService.sendMessage(this.ticketId, text);
-  //   this.messageText = '';
-  //   if (this.typingTimeout) clearTimeout(this.typingTimeout);
-  //   this.socketService.emitStopTyping(this.ticketId);
-  // }
   send() {
     const text = this.messageText.trim();
     const file = this.selectedFile();
-    if (!text && !file) return; // nothing to send
+    if (!text && !file) return;
     if (this.typingTimeout) clearTimeout(this.typingTimeout);
     this.socketService.emitStopTyping(this.ticketId);
     if (file) {
@@ -207,25 +199,6 @@ export class TicketChat {
     if (file.type.startsWith('image/')) {
       this.previewUrl.set(URL.createObjectURL(file));
     }
-    // this.uploadingAttachment.set(true);
-    // this.chatService.uploadAttachment(this.ticketId, file).subscribe({
-    //   next: (attachment) => {
-    //     console.log('[Chat] upload succeeded, real attachment id:', attachment.id);
-    //     this.uploadingAttachment.set(false);
-    //     this.socketService.sendMessage(this.ticketId, undefined, attachment.id);
-    //     input.value = '';
-    //   },
-    //   error: (err) => {
-    //     this.uploadingAttachment.set(false);
-    //     console.error('[Chat] attachment upload failed:', err);
-    //     Swal.fire({
-    //       icon: 'error',
-    //       title: 'Upload failed',
-    //       text: err.error?.message || 'Could not attach this file.',
-    //     });
-    //     input.value = '';
-    //   },
-    // });
   }
 
   removeAttachment() {
@@ -235,7 +208,7 @@ export class TicketChat {
 
   private clearPreview() {
     const url = this.previewUrl();
-    if (url) URL.revokeObjectURL(url); // avoid leaking blob URLs
+    if (url) URL.revokeObjectURL(url);
     this.selectedFile.set(null);
     this.previewUrl.set(null);
   }
@@ -259,42 +232,34 @@ export class TicketChat {
   }
 
   formatLastSeen(lastSeen: string | null): string {
-  if (!lastSeen) {
-    return 'Offline';
+    if (!lastSeen) {
+      return 'Offline';
+    }
+    const date = new Date(lastSeen);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (minutes < 1) {
+      return 'just now';
+    }
+    if (minutes < 60) {
+      return `${minutes} min${minutes === 1 ? '' : 's'} ago`;
+    }
+    if (hours < 24) {
+      return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+    }
+    if (days === 1) {
+      return `yesterday at ${date.toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+      })}`;
+    }
+    return date.toLocaleDateString([], {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
   }
-
-  const date = new Date(lastSeen);
-  const now = new Date();
-
-  const diff = now.getTime() - date.getTime();
-
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) {
-    return 'just now';
-  }
-
-  if (minutes < 60) {
-    return `${minutes} min${minutes === 1 ? '' : 's'} ago`;
-  }
-
-  if (hours < 24) {
-    return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-  }
-
-  if (days === 1) {
-    return `yesterday at ${date.toLocaleTimeString([], {
-      hour: 'numeric',
-      minute: '2-digit',
-    })}`;
-  }
-
-  return date.toLocaleDateString([], {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
 }

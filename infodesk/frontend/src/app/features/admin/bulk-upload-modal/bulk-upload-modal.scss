@@ -1,0 +1,14 @@
+.bulk-step {
+  display: flex;
+  gap: .9rem;
+  margin-bottom: 1.25rem;
+}
+.bulk-step-number {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78rem; font-weight: 700;
+  flex-shrink: 0;
+}
