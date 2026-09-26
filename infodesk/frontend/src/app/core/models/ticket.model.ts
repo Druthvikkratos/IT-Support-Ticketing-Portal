@@ -26,6 +26,7 @@ export interface Ticket {
   assignedAdminId: string | null;
   assignedAdmin: { id: string; name: string } | null;
   assignmentHistory?: AssignmentEvent[];
+  isOverdue?: boolean;
 }
 
 export interface CreateTicketPayload {

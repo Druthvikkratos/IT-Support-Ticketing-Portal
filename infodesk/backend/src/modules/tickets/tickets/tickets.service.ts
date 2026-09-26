@@ -14,6 +14,7 @@ import { generateNextTicketNumber } from 'src/common/utils/ticket-number.util';
 import { UpdateTicketStatusDto } from '../dto/update-ticket-status.dto';
 import { ChatService } from '../chat/chat/chat.service';
 import { NotificationService } from 'src/modules/notifications/notifications/notification.service';
+import { isOverdue } from 'src/common/utils/sla.util';
 
 @Injectable()
 export class TicketsService {
@@ -229,6 +230,7 @@ export class TicketsService {
       const withUnread = data.map((t) => ({
         ...t,
         unreadMessageCount: unreadCounts[t.id] ?? 0,
+        isOverdue: isOverdue(t.status, t.priority, t.updatedAt),
       }));
       this.logger.log(
         `Find tickets query completed | resultCount=${data.length} | total=${total} | page=${page}`,
@@ -298,7 +300,7 @@ export class TicketsService {
       this.logger.log(
         `Find ticket completed | ticketId=${id} | userId=${requestingUser.userId}`,
       );
-      return { ...ticket, unreadMessageCount };
+      return { ...ticket, unreadMessageCount, isOverdue: isOverdue(ticket.status, ticket.priority, ticket.updatedAt), };
     } catch (error) {
       if (
         error instanceof NotFoundException ||

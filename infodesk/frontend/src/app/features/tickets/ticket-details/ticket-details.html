@@ -23,6 +23,9 @@
         >
           {{ t.priority }}
         </span>
+        @if (t.isOverdue) {
+          <span class="overdue-badge"><i class="ti ti-alert-triangle"></i> Overdue</span>
+        }
       </div>
       <h4 class="fw-bold mb-2 mt-2">{{ t.title }}</h4>
       @if (authService.isAdmin()) {

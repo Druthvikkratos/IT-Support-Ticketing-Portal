@@ -79,6 +79,9 @@
               ></i>
             </span>
           </th>
+          <th class="col-fit text-center">
+            <span class="th-content justify-content-center">OverDue</span>
+          </th>
           <th class="col-fit actions-col text-center">
             <span class="th-content justify-content-center">Actions</span>
           </th>
@@ -117,6 +120,11 @@
                 </span>
               </td>
               <td class="col-fit text-muted">{{ ticket.createdAt | date: 'MMM d, y' }}</td>
+              <td class="col-fit text-center">
+                @if (ticket.isOverdue) {
+                  <span class="overdue-badge"><i class="ti ti-alert-triangle"></i> Overdue</span>
+                }
+              </td>
               <td class="col-fit actions-col" (click)="$event.stopPropagation()">
                 <div class="actions-group">
                   <span class="icon-btn-wrapper">
