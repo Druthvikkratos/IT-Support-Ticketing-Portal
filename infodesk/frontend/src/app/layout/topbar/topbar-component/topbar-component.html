@@ -63,6 +63,17 @@
           </div>
         </div>
       }
+      <button
+        class="icon-btn theme-toggle me-2"
+        (click)="themeService.toggle()"
+        title="Toggle dark/light mode"
+      >
+        <i
+          class="ti"
+          [class.ti-moon]="themeService.theme() === 'light'"
+          [class.ti-sun]="themeService.theme() === 'dark'"
+        ></i>
+      </button>
     </div>
     <div class="dropdown">
       <button type="button" class="btn user-chip dropdown-toggle" data-bs-toggle="dropdown">

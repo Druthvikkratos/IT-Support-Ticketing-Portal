@@ -7,6 +7,7 @@ import { NotificationService } from '../../../core/services/notification-service
 import { Router } from '@angular/router';
 import { AppNotification } from '../../../core/models/notification.model';
 import { CommonModule } from '@angular/common';
+import { ThemeService } from '../../../core/services/theme-service';
 
 @Component({
   selector: 'app-topbar-component',
@@ -21,6 +22,7 @@ export class TopbarComponent {
   pollingService = inject(PollingService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
+  themeService = inject(ThemeService)
 
   showNotifications = signal<boolean>(false);
   notifications = signal<AppNotification[]>([]);
