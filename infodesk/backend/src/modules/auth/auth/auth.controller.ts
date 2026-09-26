@@ -12,12 +12,14 @@ import express from 'express';
 import { LoginDto } from 'src/modules/users/dto/login.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { JwtAuthGaurd } from '../guards/jwt-auth.guard';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
   @Post('login')
   @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: express.Response,
@@ -30,7 +32,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 10 * 60 * 60 * 1000,
     });
     return {
       id: user.id,

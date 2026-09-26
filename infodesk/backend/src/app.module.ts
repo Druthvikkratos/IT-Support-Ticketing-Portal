@@ -13,9 +13,24 @@ import { NotificationModule } from './modules/notifications/notifications/notifi
 import { DashboardModule } from './modules/dashboard/dashboard/dashboard.module';
 import { ReportModule } from './modules/reports/report/report.module';
 import { HistoryModule } from './modules/history/history/history.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env.THROTTLE_TTL) * 1000,
+        limit: Number(process.env.THROTTLE_LIMIT),
+      },
+    ]),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: {
+        expiresIn: (process.env.JWT_EXPIRY as any) || '10h'
+      },
+    }),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -27,9 +42,9 @@ import { HistoryModule } from './modules/history/history/history.module';
     NotificationModule,
     DashboardModule,
     ReportModule,
-    HistoryModule
+    HistoryModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }, AppService],
 })
 export class AppModule {}

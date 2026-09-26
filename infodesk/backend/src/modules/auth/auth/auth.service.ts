@@ -33,8 +33,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid Creditials');
     }
 
-    const paylod = { sub: user.id, role: user.role, email: user.email };
-    const token = this.jwtService.sign(paylod, { expiresIn: '24h' });
+    const payload = { sub: user.id, role: user.role, email: user.email };
+    const token = this.jwtService.sign(payload, {
+      expiresIn: (process.env.JWT_EXPIRY as any) || '10h',
+    });
     return { token, user };
   }
 
