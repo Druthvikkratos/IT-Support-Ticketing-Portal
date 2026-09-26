@@ -42,6 +42,10 @@
           </div>
         </div>
 
+        <div class="text-end mb-2">
+          <a routerLink="/forgot-password" class="small text-muted">Forgot password?</a>
+        </div>
+
         @if (errorMessage()) {
           <div class="alert alert-danger py-2 small">{{ errorMessage() }}</div>
         }

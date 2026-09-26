@@ -13,6 +13,7 @@ import { LoginDto } from 'src/modules/users/dto/login.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { JwtAuthGaurd } from '../guards/jwt-auth.guard';
 import { Throttle } from '@nestjs/throttler';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -54,5 +55,12 @@ export class AuthController {
   @UseGuards(JwtAuthGaurd)
   async me(@CurrentUser() user) {
     return this.authService.getCurrentUser(user.userId);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  resetPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.resetPasswordSelfService(dto);
   }
 }

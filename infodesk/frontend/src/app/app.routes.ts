@@ -9,6 +9,11 @@ export const routes: Routes = [
       import('./features/auth/login-component/login-component').then((m) => m.LoginComponent),
   },
   {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('./features/auth/forgot-password/forgot-password').then((m) => m.ForgotPassword),
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./layout/shell/shell-component/shell-component').then((m) => m.ShellComponent),
