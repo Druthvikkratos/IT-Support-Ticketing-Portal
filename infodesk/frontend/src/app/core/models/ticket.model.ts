@@ -16,7 +16,7 @@ export interface Ticket {
   phoneNumber: string;
   customFieldValues: Record<string, any> | null;
   raisedById: string;
-  rasiedBy: { id: string; name: string; employeeCode: string | null; email?: string };
+  raisedBy: { id: string; name: string; employeeCode: string | null; email?: string };
   createdAt: string;
   updatedAt: string;
   closedAt: string | null;
@@ -27,6 +27,7 @@ export interface Ticket {
   assignedAdmin: { id: string; name: string } | null;
   assignmentHistory?: AssignmentEvent[];
   isOverdue?: boolean;
+  botStarted?: boolean;
 }
 
 export interface CreateTicketPayload {
@@ -36,6 +37,8 @@ export interface CreateTicketPayload {
   priority: Priority;
   phoneNumber: string;
   customFieldValues?: Record<string, any>;
+  clientRequestId?: string;
+  quickReport?: boolean;
 }
 
 // shared status display config — used by every ticket screen so the

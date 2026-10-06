@@ -53,6 +53,19 @@ enum NotificationType {
   bulk_upload_result
 }
 
+enum BotState {
+  none
+  awaiting_reply
+  resolved
+  escalated
+}
+
+enum MessageKind {
+  text
+  bot
+  bot_actions
+}
+
 model User {
   id           String    @id @default(uuid())
   role         Role
@@ -88,12 +101,13 @@ model User {
 }
 
 model IssueType {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt
   tickets   Ticket[]
+  botGuide  BotGuide?
 
   @@map("issue_type")
 }
@@ -126,7 +140,7 @@ model Ticket {
   customFieldValues Json?        @map("custom_field_values")
 
   raisedById      String
-  rasiedBy        User                  @relation("RaisedBy", fields: [raisedById], references: [id])
+  raisedBy        User                  @relation("RaisedBy", fields: [raisedById], references: [id])
   assignedAdminId String?
   assignedAdmin   User?                 @relation("AssignedAdmin", fields: [assignedAdminId], references: [id])
   statusHistory   TicketStatusHistory[]
@@ -139,7 +153,10 @@ model Ticket {
   ticketMessages     TicketMessage[]
   ticketMessageReads TicketMessageRead[]
   assignmentHistory  TicketAssignmentHistory[]
+  botState           BotState                  @default(none)
+  clientRequestId    String?
 
+  @@unique([raisedById, clientRequestId])
   @@map("tickets")
 }
 
@@ -190,6 +207,7 @@ model TicketMessage {
   attachmentId String?
   attachment   TicketAttachment? @relation(fields: [attachmentId], references: [id])
   createdAt    DateTime          @default(now()) @map("created_at")
+  kind         MessageKind       @default(text)
 
   @@map("ticket_messages")
 }
@@ -230,4 +248,25 @@ model TicketAssignmentHistory {
   changedAt   DateTime @default(now()) @map("changed_at")
 
   @@map("ticket_assignment_history")
+}
+
+model BotGuide {
+  id          Int       @id @default(autoincrement())
+  issueTypeId Int       @unique
+  issueType   IssueType @relation(fields: [issueTypeId], references: [id])
+  title       String
+  steps       Json
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("bot_guides")
+}
+
+model AppSettings {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
 }

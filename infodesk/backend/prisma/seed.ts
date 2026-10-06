@@ -1,5 +1,6 @@
 import { PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -45,11 +46,31 @@ async function main() {
   console.log('Issue types seeded.');
 
   await prisma.ticketCounter.upsert({
-    where: {id: 1},
+    where: { id: 1 },
     update: {},
-    create: {id: 1, lastNumber: 0}
-  })
+    create: { id: 1, lastNumber: 0 },
+  });
   console.log('Ticket counter initialized.');
+
+  await prisma.user.upsert({
+    where: { email: 'bot@infodesk.local' },
+    update: {},
+    create: {
+      role: Role.admin,
+      name: 'InfoBot',
+      email: 'bot@infodesk.local',
+      password: await bcrypt.hash(randomBytes(24).toString('hex'), 10),
+      isActive: false,
+    },
+  });
+
+  for (const key of ['it_phone', 'incident_message']) {
+    await prisma.appSettings.upsert({
+      where: { key },
+      update: {},
+      create: { key, value: '' },
+    });
+  }
 }
 
 main()

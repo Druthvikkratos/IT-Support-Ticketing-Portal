@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 import { CommonModule } from '@angular/common';
 import { AttachementService } from '../../../core/services/attachement-service';
 import { UserService } from '../../../core/services/user-service';
+import { AiService } from '../../../core/services/ai-service';
 
 @Component({
   selector: 'app-ticket-chat',
@@ -33,6 +34,7 @@ export class TicketChat {
   @Input() counterpartName? = 'Chat';
   @Input() counterpartUserId?: string;
   @Output() markedRead = new EventEmitter<void>();
+  @Output() ticketChanged = new EventEmitter<void>();
 
   @ViewChild('scrollAnchor') scrollAnchor?: ElementRef<HTMLDivElement>;
   @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
@@ -42,11 +44,14 @@ export class TicketChat {
   private attachmentsService = inject(AttachementService);
   authService = inject(AuthService);
   private userService = inject(UserService);
+  private aiService = inject(AiService);
 
   messages = signal<ChatMessage[]>([]);
   loading = signal(true);
   uploadingAttachment = signal(false);
+  botBusy = signal(false);
   messageText = '';
+  summarizing = signal(false);
 
   private messageSub?: Subscription;
   private errorSub?: Subscription;
@@ -260,6 +265,49 @@ export class TicketChat {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
+    });
+  }
+
+  showBotActions(): boolean {
+    const list = this.messages();
+    const last = list[list.length - 1];
+    return (
+      !!last && last.kind === 'bot_actions' && !this.ticketClosed && !this.authService.isAdmin()
+    );
+  }
+
+  answerBot(fixed: boolean) {
+    this.botBusy.set(true);
+    const request$ = fixed
+      ? this.chatService.botResolved(this.ticketId)
+      : this.chatService.botEscalate(this.ticketId);
+    request$.subscribe({
+      next: () => {
+        this.botBusy.set(false);
+        this.ticketChanged.emit();
+      },
+      error: (err) => {
+        this.botBusy.set(false);
+        Swal.fire({ icon: 'error', title: 'Could not send your answer', text: err.error?.message });
+      },
+    });
+  }
+
+  summarize() {
+    this.summarizing.set(true);
+    this.aiService.summarize(this.ticketId).subscribe({
+      next: (r) => {
+        this.summarizing.set(false);
+        // textContent (not innerHTML) so model output can never inject HTML into the page
+        const box = document.createElement('div');
+        box.style.cssText = 'white-space: pre-line; text-align: left;';
+        box.textContent = r.summary;
+        Swal.fire({ title: 'AI summary', html: box, confirmButtonColor: '#0ea5e9' });
+      },
+      error: (err) => {
+        this.summarizing.set(false);
+        Swal.fire({ icon: 'error', title: 'AI unavailable', text: err.error?.message });
+      },
     });
   }
 }

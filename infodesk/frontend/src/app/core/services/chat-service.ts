@@ -33,4 +33,11 @@ export class ChatService {
       {},
     );
   }
+
+  botResolved(ticketId: string) {
+    return this.http.post(`${environment.apiUrl}/tickets/${ticketId}/bot/resolved`, {});
+  }
+  botEscalate(ticketId: string) {
+    return this.http.post(`${environment.apiUrl}/tickets/${ticketId}/bot/escalate`, {});
+  }
 }

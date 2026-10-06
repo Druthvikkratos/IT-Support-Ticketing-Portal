@@ -1,4 +1,14 @@
-import { IsEnum, IsInt, IsNotEmpty, IsObject, IsOptional, IsPhoneNumber, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { Priority } from '@prisma/client';
 
 export class CreateTicketDto {
@@ -18,10 +28,16 @@ export class CreateTicketDto {
   @IsNotEmpty()
   phoneNumber: string;
 
-  // { "3": "Dell Latitude 5420", "7": "IT-204" } — validated loosely here,
-  // since the real per-field validation (required/type/options match)
-  // happens in the service against the live FormField definitions
   @IsOptional()
   @IsObject()
   customFieldValues?: Record<string, any>;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  clientRequestId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  quickReport?: boolean;
 }

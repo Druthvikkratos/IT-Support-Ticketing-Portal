@@ -92,6 +92,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/employee/my-profile/my-profile').then((m) => m.MyProfile),
       },
+      {
+        path: 'bot-guides',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/bot-guides/bot-guides').then((m) => m.BotGuides),
+      },
     ],
   },
   {

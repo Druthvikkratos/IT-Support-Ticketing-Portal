@@ -1,0 +1,40 @@
+<div class="card border-0 shadow-sm mt-4">
+  <div class="card-header bg-white py-3">
+    <span class="fw-semibold small text-muted"
+      ><i class="ti ti-broadcast me-1"></i> NETWORK NOTICE &amp; IT CONTACT</span
+    >
+  </div>
+  <div class="card-body">
+    <label class="form-label small fw-medium"
+      >IT phone number (shown to employees when they are offline)</label
+    >
+    <input
+      class="form-control mb-3"
+      [(ngModel)]="itPhone"
+      placeholder="+91 98765 43210"
+      maxlength="20"
+    />
+
+    <label class="form-label small fw-medium"
+      >Incident notice (shown at the top of every employee's screen)</label
+    >
+    <textarea
+      class="form-control mb-3"
+      rows="2"
+      maxlength="300"
+      [(ngModel)]="incident"
+      placeholder="Office internet is down. IT is working on it — expected back by 3 PM."
+    ></textarea>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary btn-sm" [disabled]="saving()" (click)="save()">Publish</button>
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="saving()"
+        (click)="clearIncident()"
+      >
+        Clear notice
+      </button>
+    </div>
+  </div>
+</div>

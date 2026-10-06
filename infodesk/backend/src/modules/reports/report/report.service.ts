@@ -33,7 +33,7 @@ export class ReportService {
         orderBy: { createdAt: 'desc' },
         include: {
           issueType: { select: { name: true } },
-          rasiedBy: { select: { name: true, employeeCode: true, email: true } },
+          raisedBy: { select: { name: true, employeeCode: true, email: true } },
         },
       });
       this.logger.log(
@@ -78,9 +78,9 @@ export class ReportService {
         sheet.addRow({
           ticketNumber: ticket.ticketNumber,
           title: ticket.title,
-          raisedByName: ticket.rasiedBy.name,
-          employeeCode: ticket.rasiedBy.employeeCode ?? '-',
-          email: ticket.rasiedBy.email,
+          raisedByName: ticket.raisedBy.name,
+          employeeCode: ticket.raisedBy.employeeCode ?? '-',
+          email: ticket.raisedBy.email,
           issueType: ticket.issueType.name,
           priority: ticket.priority.toUpperCase(),
           status: ticket.status.replace('_', ' ').toUpperCase(),

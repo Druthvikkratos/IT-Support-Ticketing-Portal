@@ -1,0 +1,41 @@
+@if (settings.settings().incidentMessage; as message) {
+  <div class="incident-banner">
+    <i class="ti ti-alert-octagon"></i>
+    <div>
+      <strong>Notice from IT:</strong> {{ message }}
+      @if (settings.settings().incidentUpdatedAt; as at) {
+        <span class="incident-time">· {{ at | date: 'MMM d, h:mm a' }}</span>
+      }
+    </div>
+  </div>
+}
+
+@if (!connectivity.serverReachable()) {
+  <div class="offline-bar">
+    <div class="offline-title">
+      <i class="ti ti-wifi-off"></i>
+      @if (!connectivity.deviceOnline()) { You have no network connection }
+      @else { Can't reach InfoDesk — the internet may be down }
+    </div>
+    <div class="offline-sub">
+      You can still write a ticket. It is saved on this device and sent automatically when the connection returns.
+    </div>
+    <div class="offline-actions">
+      <button class="btn btn-sm btn-light" (click)="connectivity.check()"><i class="ti ti-refresh"></i> Retry</button>
+      @if (settings.settings().itPhone; as phone) {
+        <a class="btn btn-sm btn-light" [href]="'tel:' + phone"><i class="ti ti-phone"></i> Call IT</a>
+        <a class="btn btn-sm btn-light" [href]="smsLink(phone)"><i class="ti ti-message"></i> Text IT</a>
+      }
+      <button class="btn btn-sm btn-warning" (click)="reportNetworkProblem()"><i class="ti ti-flag"></i> Report network problem</button>
+    </div>
+  </div>
+}
+
+@if (outbox.pendingCount() > 0) {
+  <div class="outbox-bar">
+    <i class="ti ti-clock-up"></i> {{ outbox.pendingCount() }} item(s) waiting to be sent
+    @if (connectivity.serverReachable()) {
+      <button class="btn btn-sm btn-link" [disabled]="outbox.syncing()" (click)="outbox.syncAll()">Send now</button>
+    }
+  </div>
+}

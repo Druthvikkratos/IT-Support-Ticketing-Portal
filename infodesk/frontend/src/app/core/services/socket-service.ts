@@ -23,6 +23,9 @@ export class SocketService {
   private errorSubject = new Subject<string>();
   error$ = this.errorSubject.asObservable();
 
+  private settingsSubject = new Subject<any>();
+  settingsChanged$ = this.settingsSubject.asObservable();
+
   connect() {
     if (this.socket?.connected) return;
     this.socket = io(`${environment.wsUrl}/chat`, { withCredentials: true });
@@ -96,6 +99,7 @@ export class SocketService {
         return updated;
       });
     });
+    this.socket.on('settingsChanged', (s) => this.settingsSubject.next(s))
   }
 
   joinRoom(ticketId: string) {

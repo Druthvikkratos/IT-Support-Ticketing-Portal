@@ -15,6 +15,8 @@ import { getUserFromSocket, SocketUser } from '../utils/socket-auth.util';
 import { SendMessageDto } from '../dto/send-message.dto';
 import { NotificationService } from 'src/modules/notifications/notifications/notification.service';
 import { PrismaService } from 'src/modules/prisma/prisma/prisma.service';
+import { OnEvent } from '@nestjs/event-emitter';
+import { CHAT_MESSAGE_EVENT, SETTINGS_CHANGED_EVENT } from 'src/common/events';
 
 @WebSocketGateway({
   namespace: '/chat',
@@ -24,6 +26,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ChatGateway.name);
   private onlineUsers = new Map<string, number>();
   private lastSeenUsers = new Map<string, Date>();
+
+  private recentDrops: number[] = [];
+  private lastOutageAlertAt = 0;
+  private readonly DROP_WINDOWS_MS = 60_000;
+  private readonly DROP_THRESHOLD = Number(
+    process.env.OUTAGE_DROP_THRESHOLD ?? 5,
+  );
 
   @WebSocketServer()
   server: Server;
@@ -47,6 +56,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
       client.data.user = user;
+      client.once('disconnect', (reason) => {
+        if(reason === 'ping timeout') this.trackNetworkDrop()
+      })
       const lastSeenObj = Object.fromEntries(
         Array.from(this.lastSeenUsers.entries()).map(([id, date]) => [
           id,
@@ -251,11 +263,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('getPresenceSnapshot')
-  async handleSnapshot(@ConnectedSocket()  client: Socket, @MessageBody() userIds: string[]) {
-    // Return who is currently online, and lastSeen timestamps for the rest
+  async handleSnapshot(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() userIds: string[],
+  ) {
     const offlineUserIds = userIds.filter((id) => !this.onlineUsers.has(id));
     const lastSeenMap = await this.getLastSeenForUsers(offlineUserIds);
-
     client.emit('presenceSnapshot', {
       onlineUserIds: Array.from(this.onlineUsers.keys()),
       lastSeenMap,
@@ -272,7 +285,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
       select: { id: true, lastSeen: true },
     });
-
     const lastSeenMap: Record<string, string> = {};
     for (const u of users) {
       if (u.lastSeen) {
@@ -281,4 +293,39 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     return lastSeenMap;
   }
+
+  @OnEvent(CHAT_MESSAGE_EVENT)
+  handleServerMessage(message: { ticketId: string }) {
+    this.server.to(`ticket:${message.ticketId}`).emit('newMessage', message);
+  }
+
+  @OnEvent(SETTINGS_CHANGED_EVENT)
+  handleSettingsChanged(payload: unknown) {
+    this.server.emit('settingsChanged', payload);
+  }
+
+  private trackNetworkDrop() {
+    const now = Date.now();
+    const recentDrops = this.recentDrops.filter(
+      (t) => now - t < this.DROP_WINDOWS_MS,
+    );
+    this.recentDrops.push(now);
+
+    const cooledDown = now - this.lastOutageAlertAt > 10 * 60_000;
+    if (recentDrops.length >= this.DROP_THRESHOLD && cooledDown) {
+      this.lastOutageAlertAt = now;
+      this.logger.warn(
+        `Possible network outage: ${this.recentDrops.length} connections timed out within 60s`,
+      );
+      this.notificationService
+        .notifyAllAdmins(
+          'status_changed',
+          `Possible network outage: ${this.recentDrops.length} users lost connection at the same time. Post an incident notice if confirmed.`,
+        )
+        .catch((err) =>
+          this.logger.error(`Outage alert failed: ${err.message}`),
+        );
+    }
+  }
+
 }

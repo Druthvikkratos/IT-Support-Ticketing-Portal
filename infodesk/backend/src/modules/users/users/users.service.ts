@@ -101,6 +101,7 @@ export class UsersService {
       sortDir = 'desc',
     } = query;
     const where: Prisma.UserWhereInput = {};
+    where.email = {not: 'bot@infodesk.local'}
     if (role) where.role = role;
     if (isActive !== undefined) where.isActive = isActive;
     if (search) {

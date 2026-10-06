@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth-service';
 import { FormFieldsService } from '../../../core/services/form-fields-service';
@@ -10,7 +10,6 @@ import { CommonModule } from '@angular/common';
 import { AttachementService } from '../../../core/services/attachement-service';
 import { TicketChat } from '../ticket-chat/ticket-chat';
 import { User } from '../../../core/models/user.model';
-import { UserService } from '../../../core/services/user-service';
 import { ReassignModal } from '../reassign-modal/reassign-modal';
 
 @Component({
@@ -35,6 +34,7 @@ export class TicketDetails {
   updating = signal(false);
   showChat = signal(false);
   showReassignModal = signal(false);
+  private chatAutoOpened = false;
 
   users = signal<User[]>([]);
 
@@ -75,6 +75,10 @@ export class TicketDetails {
     this.ticketsService.findOne(id).subscribe({
       next: (ticket) => {
         this.ticket.set(ticket);
+        if(this.route.snapshot.queryParamMap.get('openChat') === '1' && !this.chatAutoOpened){
+          this.chatAutoOpened = true;
+          this.showChat.set(true)
+        }
         this.loading.set(false);
       },
       error: () => {
@@ -247,5 +251,10 @@ export class TicketDetails {
       const t = this.ticket();
       if (t) this.loadTicket(t.id);
     }
+  }
+
+  refresh() {
+    const t = this.ticket();
+    if (t) this.loadTicket(t.id);
   }
 }

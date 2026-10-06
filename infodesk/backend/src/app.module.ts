@@ -16,6 +16,10 @@ import { HistoryModule } from './modules/history/history/history.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
+import { BotModule } from './modules/bot/bot/bot.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { AiModule } from './modules/ai/ai/ai.module';
+import { SettingsModule } from './modules/settings/settings/settings.module';
 
 @Module({
   imports: [
@@ -31,6 +35,7 @@ import { JwtModule } from '@nestjs/jwt';
         expiresIn: (process.env.JWT_EXPIRY as any) || '10h'
       },
     }),
+    EventEmitterModule.forRoot(),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -43,6 +48,9 @@ import { JwtModule } from '@nestjs/jwt';
     DashboardModule,
     ReportModule,
     HistoryModule,
+    BotModule,
+    AiModule,
+    SettingsModule
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }, AppService],

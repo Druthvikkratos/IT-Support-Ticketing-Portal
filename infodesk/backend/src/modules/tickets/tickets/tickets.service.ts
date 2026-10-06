@@ -15,6 +15,7 @@ import { UpdateTicketStatusDto } from '../dto/update-ticket-status.dto';
 import { ChatService } from '../chat/chat/chat.service';
 import { NotificationService } from 'src/modules/notifications/notifications/notification.service';
 import { isOverdue } from 'src/common/utils/sla.util';
+import { BotService } from 'src/modules/bot/bot/bot.service';
 
 @Injectable()
 export class TicketsService {
@@ -23,6 +24,7 @@ export class TicketsService {
     private prisma: PrismaService,
     private chatService: ChatService,
     private notificationService: NotificationService,
+    private botService: BotService,
   ) {}
 
   async createTicket(dto: CreateTicketDto, raisedById: string) {
@@ -30,6 +32,21 @@ export class TicketsService {
       `Create ticket started | raisedById=${raisedById} | issueTypeId=${dto.issueTypeId}`,
     );
     try {
+      if (dto.clientRequestId) {
+        const existing = await this.prisma.ticket.findFirst({
+          where: { raisedById, clientRequestId: dto.clientRequestId },
+          include: {
+            issueType: true,
+            raisedBy: { select: { id: true, name: true, employeeCode: true } },
+          },
+        });
+        if (existing) {
+          this.logger.log(
+            `Duplicate submit ignored (key=${dto.clientRequestId}) -> ticket ${existing.id}`,
+          );
+          return { ...existing, botStarted: false };
+        }
+      }
       const issueType = await this.prisma.issueType.findUnique({
         where: { id: dto.issueTypeId },
       });
@@ -39,13 +56,14 @@ export class TicketsService {
         );
         throw new BadRequestException('Selected issue type is not valid');
       }
-      await this.validateCustomFieldValues(dto.customFieldValues);
-      return await this.prisma.$transaction(async (tx) => {
+      if (!dto.quickReport)
+        await this.validateCustomFieldValues(dto.customFieldValues);
+      const ticket = await this.prisma.$transaction(async (tx) => {
         const ticketNumber = await generateNextTicketNumber(tx as any);
         this.logger.log(
           `Creating ticket record | ticketNumber=${ticketNumber} | raisedById=${raisedById}`,
         );
-        const ticket = await tx.ticket.create({
+        const created = await tx.ticket.create({
           data: {
             ticketNumber,
             title: dto.title,
@@ -54,30 +72,48 @@ export class TicketsService {
             priority: dto.priority,
             phoneNumber: dto.phoneNumber,
             customFieldValues: dto.customFieldValues ?? undefined,
+            clientRequestId: dto.clientRequestId,
             raisedById,
           },
           include: {
             issueType: true,
-            rasiedBy: { select: { id: true, name: true, employeeCode: true } },
+            raisedBy: { select: { id: true, name: true, employeeCode: true } },
           },
         });
-        await this.logStatusChange(tx, ticket.id, null, 'raised', raisedById);
+        await this.logStatusChange(tx, created.id, null, 'raised', raisedById);
+        this.logger.log(
+          `Create ticket completed | ticketId=${created.id} | ticketNumber=${created.ticketNumber} | raisedById=${raisedById}`,
+        );
+        return created;
+      });
+      let botStarted = false;
+      if (!dto.quickReport) {
+        try {
+          botStarted = await this.botService.startGuide(ticket);
+        } catch (err: any) {
+          this.logger.error(
+            `Bot start failed for ticket ${ticket.id}: ${err.message}`,
+            err.stack,
+          );
+        }
+      }
+      if (!botStarted) {
         this.notificationService
           .notifyAllAdmins(
             'ticket_raised',
-            `${ticket.rasiedBy.name} raised a new ticket: ${ticket.ticketNumber} — ${ticket.title}`,
+            `${ticket.raisedBy.name} raised a new ticket: ${ticket.ticketNumber} — ${ticket.title}`,
             ticket.id,
           )
           .catch((err) =>
             this.logger.error(
-              `Notification dispatch failed for new ticket ${ticket.id}: ${err.message}`,
+              `Notification dispatch failed | ticketId=${ticket.id}: ${err.message}`,
             ),
           );
-        this.logger.log(
-          `Create ticket completed | ticketId=${ticket.id} | ticketNumber=${ticket.ticketNumber} | raisedById=${raisedById}`,
-        );
-        return ticket;
-      });
+      }
+      this.logger.log(
+        `Create ticket completed | ticketId=${ticket.id} | ticketNumber=${ticket.ticketNumber} | botStarted=${botStarted}`,
+      );
+      return { ...ticket, botStarted };
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
@@ -218,7 +254,7 @@ export class TicketsService {
           orderBy: { [sortField]: sortDir },
           include: {
             issueType: { select: { id: true, name: true } },
-            rasiedBy: { select: { id: true, name: true, employeeCode: true } },
+            raisedBy: { select: { id: true, name: true, employeeCode: true } },
           },
         }),
         this.prisma.ticket.count({ where }),
@@ -260,7 +296,7 @@ export class TicketsService {
         where: { id },
         include: {
           issueType: true,
-          rasiedBy: { select: { id: true, name: true, employeeCode: true } },
+          raisedBy: { select: { id: true, name: true, employeeCode: true } },
           assignedAdmin: { select: { id: true, name: true } },
           statusHistory: {
             orderBy: { changedAt: 'asc' },
@@ -300,7 +336,11 @@ export class TicketsService {
       this.logger.log(
         `Find ticket completed | ticketId=${id} | userId=${requestingUser.userId}`,
       );
-      return { ...ticket, unreadMessageCount, isOverdue: isOverdue(ticket.status, ticket.priority, ticket.updatedAt), };
+      return {
+        ...ticket,
+        unreadMessageCount,
+        isOverdue: isOverdue(ticket.status, ticket.priority, ticket.updatedAt),
+      };
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -390,17 +430,19 @@ export class TicketsService {
         );
         throw new NotFoundException('Ticket not found');
       }
-      if(!ticket.assignedAdminId){
-         this.logger.warn(
-          `Update ticket status failed | ticketId=${id}`,
+      if (!ticket.assignedAdminId) {
+        this.logger.warn(`Update ticket status failed | ticketId=${id}`);
+        throw new BadRequestException(
+          'Claim this ticket before updating the status',
         );
-        throw new BadRequestException('Claim this ticket before updating the status')
       }
-      if(ticket.assignedAdminId !== changedById){
+      if (ticket.assignedAdminId !== changedById) {
         this.logger.warn(
           `Update ticket status failed due to only assigned admin can update this ticket | ticketId=${id}`,
         );
-        throw new ForbiddenException('Only the assigned admin can update this ticket')
+        throw new ForbiddenException(
+          'Only the assigned admin can update this ticket',
+        );
       }
       if (ticket.status === 'closed') {
         this.logger.warn(
@@ -584,6 +626,20 @@ export class TicketsService {
           },
         });
         this.logger.log(`Ticket ${ticketId} claimed by admin ${adminId}`);
+        const admin = await this.prisma.user.findUnique({
+          where: { id: adminId },
+          select: { name: true },
+        });
+        this.notificationService
+          .create(
+            ticket.raisedById,
+            'status_changed',
+            `${admin?.name ?? 'An admin'} picked up your ticket ${ticket.ticketNumber} and will contact you`,
+            ticketId,
+          )
+          .catch((err) =>
+            this.logger.error(`Claim notification failed: ${err.message}`),
+          );
         return updated;
       });
     } catch (error) {
@@ -645,8 +701,18 @@ export class TicketsService {
           toAdminId: newAdminId,
         },
       });
-      this.notificationService.create(newAdminId, 'status_changed', `Ticket ${ticket.ticketNumber} was reassigned to you`, ticketId)
-      .catch((err) => this.logger.error(`Notification dispatch failed for reassign: ${err.message}`))
+      this.notificationService
+        .create(
+          newAdminId,
+          'status_changed',
+          `Ticket ${ticket.ticketNumber} was reassigned to you`,
+          ticketId,
+        )
+        .catch((err) =>
+          this.logger.error(
+            `Notification dispatch failed for reassign: ${err.message}`,
+          ),
+        );
       this.logger.log(
         `Ticket ${ticketId} reassigned from ${requestingAdminId} to ${newAdminId}`,
       );

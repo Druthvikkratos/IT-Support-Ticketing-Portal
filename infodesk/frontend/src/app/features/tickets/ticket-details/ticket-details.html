@@ -218,12 +218,12 @@
         </div>
         <div class="card-body">
           <div class="d-flex align-items-center gap-3">
-            <div class="detail-avatar">{{ t.rasiedBy.name.charAt(0) }}</div>
+            <div class="detail-avatar">{{ t.raisedBy.name.charAt(0) }}</div>
             <div>
-              <div class="fw-medium">{{ t.rasiedBy.name }}</div>
-              <div class="small text-muted">{{ t.rasiedBy.employeeCode }}</div>
-              @if (t.rasiedBy.email) {
-                <div class="small text-muted">{{ t.rasiedBy.email }}</div>
+              <div class="fw-medium">{{ t.raisedBy.name }}</div>
+              <div class="small text-muted">{{ t.raisedBy.employeeCode }}</div>
+              @if (t.raisedBy.email) {
+                <div class="small text-muted">{{ t.raisedBy.email }}</div>
               }
             </div>
           </div>
@@ -301,11 +301,12 @@
       [ticketClosed]="t.status === 'closed'"
       [counterpartName]="
         authService.isAdmin()
-          ? t.rasiedBy.name + (t.rasiedBy.employeeCode ? ' (' + t.rasiedBy.employeeCode + ')' : '')
+          ? t.raisedBy.name + (t.raisedBy.employeeCode ? ' (' + t.raisedBy.employeeCode + ')' : '')
           : (t.assignedAdmin?.name ?? 'IT Support Team')
       "
-      [counterpartUserId]="authService.isAdmin() ? t.rasiedBy.id : t.assignedAdmin?.id"
+      [counterpartUserId]="authService.isAdmin() ? t.raisedBy.id : t.assignedAdmin?.id"
       (closed)="showChat.set(false)"
+      (ticketChanged)="refresh()"
     />
   }
 }

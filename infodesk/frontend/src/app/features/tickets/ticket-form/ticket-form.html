@@ -38,6 +38,29 @@
           }
         </div>
 
+        <div class="mb-3">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary"
+            [disabled]="!canSuggest()"
+            (click)="suggestWithAi()"
+          >
+            @if (aiLoading()) {
+              <span class="spinner-border spinner-border-sm me-1"></span> Reading your
+              description...
+            } @else {
+              <i class="ti ti-sparkles me-1"></i> Auto-fill Issue Type &amp; Priority
+            }
+          </button>
+          @if (aiReason()) {
+            <div class="form-text"><i class="ti ti-check text-success"></i> {{ aiReason() }}</div>
+          } @else if (!canSuggest() && !aiLoading()) {
+            <div class="form-text">
+              Write your title and description above, then let AI pick these for you.
+            </div>
+          }
+        </div>
+
         <div class="row g-3 mb-3">
           <div class="col-md-6">
             <label class="form-label small fw-medium"
@@ -68,7 +91,6 @@
             </select>
           </div>
         </div>
-
         <div class="mb-3">
           <label class="form-label small fw-medium"
             >Contact Phone Number <span class="text-danger">*</span></label

@@ -2,6 +2,7 @@ import { Component, effect, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from './core/services/auth-service';
 import { SocketService } from './core/services/socket-service';
+import { OutboxService } from './core/services/outbox-service';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +14,7 @@ export class App {
   protected readonly title = signal('frontend');
   private authService = inject(AuthService);
   private socketService = inject(SocketService);
+  private outbox = inject(OutboxService)
 
   constructor() {
     effect(() => {

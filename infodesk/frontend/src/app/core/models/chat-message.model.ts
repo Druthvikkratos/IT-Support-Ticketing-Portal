@@ -7,6 +7,7 @@ export interface ChatMessage {
   attachment: TicketAttachmentSummary | null;
   createdAt: string;
   sender: { id: string; name: string; role: string };
+  kind: 'text' | 'bot' | 'bot_actions';
 }
 
 

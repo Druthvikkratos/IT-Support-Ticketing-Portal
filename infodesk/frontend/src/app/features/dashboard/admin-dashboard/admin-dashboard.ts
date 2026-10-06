@@ -4,12 +4,13 @@ import { Chart, registerables } from 'chart.js';
 import { RelativeTimePipe } from '../../../shared/pipes/relative-time.pipe';
 import { DashboardService } from '../../../core/services/dashboard-service';
 import { AdminDashboardSummary } from '../../../core/models/dashboard.model';
+import { IncidentPanel } from '../../admin/incident-panel/incident-panel';
 
 Chart.register(...registerables)
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [RouterLink, RelativeTimePipe],
+  imports: [RouterLink, RelativeTimePipe, IncidentPanel],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.scss',
 })

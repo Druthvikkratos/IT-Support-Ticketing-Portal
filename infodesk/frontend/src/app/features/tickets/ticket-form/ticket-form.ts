@@ -5,11 +5,13 @@ import { FormFieldsService } from '../../../core/services/form-fields-service';
 import { IssueTypesService } from '../../../core/services/issue-types';
 import { IssueType } from '../../../core/models/issue-type.model';
 import { FormField } from '../../../core/models/form-field.model';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of, tap } from 'rxjs';
 import { AttachementService } from '../../../core/services/attachement-service';
 import { HttpEventType } from '@angular/common/http';
 import Swal from 'sweetalert2';
 import { FRONTEND_FILE_CATEGORIES } from '../../../core/constants/file-categories';
+import { AiService } from '../../../core/services/ai-service';
+import { ConfigCacheService } from '../../../core/services/config-cache-service';
 
 @Component({
   selector: 'app-ticket-form',
@@ -28,9 +30,13 @@ export class TicketForm {
   private issueTypeService = inject(IssueTypesService);
   private formFieldService = inject(FormFieldsService);
   private attachementService = inject(AttachementService);
+  private aiService = inject(AiService);
+  private cache = inject(ConfigCacheService);
 
   loading = signal(true);
   loadError = signal<string | null>(null);
+  aiLoading = signal(false);
+  aiReason = signal<string | null>(null);
 
   issueTypes = signal<IssueType[]>([]);
   customFields = signal<FormField[]>([]);
@@ -51,10 +57,23 @@ export class TicketForm {
 
   constructor() {
     forkJoin({
-      issueTypes: this.issueTypeService.findAllActive(),
-      fields: this.formFieldService.findAllActiveFormFields(),
+      issueTypes: this.issueTypeService.findAllActive().pipe(
+        tap((v) => this.cache.save('issueTypes', v)),
+        catchError(() => of(this.cache.read<IssueType[]>('issueTypes') ?? [])),
+      ),
+      fields: this.formFieldService.findAllActiveFormFields().pipe(
+        tap((v) => this.cache.save('formFields', v)),
+        catchError(() => of(this.cache.read<FormField[]>('formFields') ?? [])),
+      ),
     }).subscribe({
       next: ({ issueTypes, fields }) => {
+        if (issueTypes.length === 0) {
+          this.loadError.set(
+            'Open this form once while online so it can be saved for offline use.',
+          );
+          this.loading.set(false);
+          return;
+        }
         this.issueTypes.set(issueTypes);
         this.customFields.set(fields);
         this.buildCustomForm(fields);
@@ -275,5 +294,65 @@ export class TicketForm {
       return allowsMultiple ? 'Choose Files' : 'Choose File';
     }
     return allowsMultiple ? 'Add More Files' : 'Replace File';
+  }
+
+  canSuggest(): boolean {
+    const title = (this.form.value.title ?? '').trim();
+    const description = (this.form.value.description ?? '').trim();
+    return title.length >= 3 && description.length >= 10 && !this.aiLoading();
+  }
+
+  suggestWithAi() {
+    this.aiLoading.set(true);
+    this.aiReason.set(null);
+
+    const previousType = this.form.value.issueTypeId;
+    const previousPriority = this.form.value.priority;
+
+    this.aiService
+      .suggest(this.form.value.title.trim(), this.form.value.description.trim())
+      .subscribe({
+        next: (s) => {
+          const typeChanged = previousType && previousType !== s.issueTypeId;
+          const priorityChanged =
+            previousPriority && previousPriority !== s.priority && previousPriority !== 'low'; // 'low' is the default, so don't treat it as a real prior choice
+
+          this.form.patchValue({ issueTypeId: s.issueTypeId, priority: s.priority });
+          this.aiReason.set(
+            typeChanged || priorityChanged
+              ? `${s.reason} (this changed what you'd selected — feel free to change it back)`
+              : s.reason || 'Suggestion applied.',
+          );
+          this.aiLoading.set(false);
+        },
+        error: (err) => {
+          console.error('[AI] suggestion failed:', err.status, err.error);
+          this.aiLoading.set(false);
+          const byStatus: Record<number, string> = {
+            0: 'Cannot reach the server.',
+            401: 'Session expired. Please log in again.',
+            403: 'AI suggestions are for employee accounts only.',
+            404: 'AI route not found. AiModule is probably missing from AppModule imports.',
+            429: 'Too many requests. Wait a minute and try again.',
+          };
+          this.aiReason.set(
+            byStatus[err.status] ?? err.error?.message ?? 'AI suggestion is unavailable right now.',
+          );
+        },
+      });
+  }
+
+  collectPendingFiles(): { fieldId: number; file: File }[] {
+    return Object.entries(this.selectedFiles()).flatMap(([fieldId, files]) =>
+      files.map((file) => ({ fieldId: Number(fieldId), file })),
+    );
+  }
+
+  resetForm() {
+    this.form.reset({ priority: 'low' });
+    this.customForm.reset();
+    this.selectedFiles.set({});
+    this.uploadProgress.set({});
+    this.fileErrors.set({});
   }
 }
