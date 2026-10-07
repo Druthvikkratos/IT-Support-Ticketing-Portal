@@ -64,13 +64,6 @@
         </div>
       }
     </div>
-    <button
-        class="icon-btn theme-toggle me-2"
-        (click)="themeService.toggle()"
-        title="Toggle dark/light mode"
-      >
-        <i class="ti" [class.ti-sun]="themeService.theme() === 'light'" [class.ti-moon]="themeService.theme() === 'dark'"></i>
-      </button>
     <div class="dropdown">
       <button type="button" class="btn user-chip dropdown-toggle" data-bs-toggle="dropdown">
         <div class="avatar">{{ authService.currentUser()?.name?.charAt(0) }}</div>

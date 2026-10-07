@@ -118,7 +118,7 @@ model FormField {
   fieldType    FieldType @map("field_type")
   options      Json?
   fileConfig   Json?     @map("file_config")
-  isRequired   Boolean   @default(false) @map("is_requried")
+  isRequired   Boolean   @default(false) @map("is_required")
   displayOrder Int       @default(0) @map("display_order")
   isActive     Boolean   @default(true) @map("is_active")
   createdAt    DateTime  @default(now()) @map("created_at")
@@ -154,7 +154,7 @@ model Ticket {
   ticketMessageReads TicketMessageRead[]
   assignmentHistory  TicketAssignmentHistory[]
   botState           BotState                  @default(none)
-  clientRequestId    String?
+  clientRequestId    String?                   @map("client_request_id")
 
   @@unique([raisedById, clientRequestId])
   @@map("tickets")
@@ -162,7 +162,7 @@ model Ticket {
 
 model TicketCounter {
   id         Int @id @default(1)
-  lastNumber Int @default(0)
+  lastNumber Int @default(0) @map("last_number")
 
   @@map("ticket_counter")
 }
@@ -184,7 +184,7 @@ model TicketAttachment {
   id             String          @id @default(uuid())
   ticketId       String          @map("ticket_id")
   ticket         Ticket          @relation(fields: [ticketId], references: [id])
-  fieldId        Int?            @map("field_int")
+  fieldId        Int?            @map("field_id")
   originalName   String          @map("original_name")
   filePath       String          @map("file_path")
   fileSize       Int             @map("file_size")
@@ -194,7 +194,7 @@ model TicketAttachment {
   uploadedAt     DateTime        @default(now()) @map("uploaded_at")
   ticketMessages TicketMessage[]
 
-  @@map("ticket_attachements")
+  @@map("ticket_attachments")
 }
 
 model TicketMessage {
